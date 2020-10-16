@@ -21,11 +21,14 @@ class UTKFaceClass:
         """
         The method to generate the UTKFaceDataset from file.
         The database should be either available extracted on
-        config.datasetDir/UTKFace or as UTKFace.tar.gz on config.datasetDir Args: transform:
+        config.datasetDir/UTKFace or as UTKFace.tar.gz on config.datasetDir
 
-        The usage of return value is optional.
+        Args:
+            transform:
+
         Returns:
             UTKFaceDataset Dataset object
+            The usage of return value is optional.
         """
         self.dataset = UTKFaceDataset(transform)
         return self.dataset
