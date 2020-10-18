@@ -6,6 +6,7 @@ import torch
 from parse import parse
 from skimage import io
 from torch.utils.data import Dataset, random_split
+from PIL import Image
 
 from config import config
 
@@ -33,7 +34,7 @@ class UTKFaceClass:
         self.dataset = UTKFaceDataset(transform)
         return self.dataset
 
-    def splitDataset(self, trainPercentage=70, validatePercentage=20, testPercentage=10):
+    def splitDataset(self, trainSize=0.7, validateSize=0.2, testSize=0.1):
         """
         Splits the dataset to three subsets for train, validation, and test.
         The splitted dataset will be on:
@@ -43,20 +44,21 @@ class UTKFaceClass:
         The usage of the returned value is optional.
 
         Args:
-            trainPercentage: percentage of the main database to be allocated to *train* set
-            validatePercentage: percentage of the main database to be allocated to *validate* set
-            testPercentage: percentage of the main database to be allocated to *test* set
+            trainSize: percentage of the main database to be allocated to *train* set
+            validateSize: percentage of the main database to be allocated to *validate* set
+            testSize: percentage of the main database to be allocated to *test* set
 
         Returns:
             [trainDataset, validateDataset, testDataset]
         """
-        if trainPercentage + validatePercentage + testPercentage != 100:
-            sys.exit("Sum of the percentages should be equal to 100.")
-        trainSize = int(len(self.dataset) * trainPercentage / 100)
-        validateSize = int(len(self.dataset) * validatePercentage / 100)
-        testSize = len(self.dataset) - trainSize - validateSize
+        if round(trainSize + validateSize + testSize, 1) != 1.0:
+            sys.exit("Sum of the percentages should be equal to 1. it's " + str(
+                trainSize + validateSize + testSize) + " now!")
+        trainLen = int(len(self.dataset) * trainSize)
+        validateLen = int(len(self.dataset) * validateSize)
+        testLen = len(self.dataset) - trainLen - validateLen
         self.trainDataset, self.validateDataset, self.testDataset = random_split(
-            self.dataset, [trainSize, validateSize, testSize], generator=torch.Generator().manual_seed(42))
+            self.dataset, [trainLen, validateLen, testLen], generator=torch.Generator().manual_seed(42))
 
     def generateDataLoaders(self):
         pass
@@ -75,7 +77,7 @@ class UTKFaceDataset(Dataset):
             label = parse('{age}_{gender}_{}_{}.jpg.chip.jpg', file)
             if label is not None:
                 self.imagesPath.append(file)
-                self.labels.append(int(label['age']))
+                self.labels.append(int(label['gender']))
         pass
 
     def __len__(self):
@@ -86,10 +88,11 @@ class UTKFaceDataset(Dataset):
             idx = idx.tolist()
         img_name = os.path.join(self.directory,
                                 self.imagesPath[idx])
-        image = io.imread(img_name)
+        image = Image.open(img_name)
+        image = image.resize((60, 60))
         if self.transform is not None:
             image = self.transform(image)
-        return image, self.labels[idx]
+        return image.to(config.device), self.labels[idx]
 
     def prepareOnDisk(self):
         if os.path.exists(self.directory):

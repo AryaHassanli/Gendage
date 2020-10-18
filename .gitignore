@@ -1,4 +1,6 @@
 /.idea
-
+Dockerfile
 /Datasets/**
+/models/**
+/.ps_project
 
