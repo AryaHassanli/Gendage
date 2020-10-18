@@ -1,56 +1,31 @@
 import os
 import sys
 import tarfile
+import zipfile
 
 import torch
-from parse import parse
-from skimage import io
-from torch.utils.data import Dataset, random_split
 from PIL import Image
+from parse import parse
+from torch.utils.data import Dataset, random_split, DataLoader
 
 from config import config
 
 
 class UTKFaceClass:
     def __init__(self):
+        self.directory = os.path.join(config.absDatasetDir, 'UTKFace')
+        self.zipFile = os.path.join(config.absDatasetDir, 'UTKFace.tar.gz')
         self.dataset = None
         self.trainDataset = None
         self.testDataset = None
         self.validateDataset = None
 
-    def importDataset(self, transform=None):
-        """
-        The method to generate the UTKFaceDataset from file.
-        The database should be either available extracted on
-        config.datasetDir/UTKFace or as UTKFace.tar.gz on config.datasetDir
-
-        Args:
-            transform:
-
-        Returns:
-            UTKFaceDataset Dataset object
-            The usage of return value is optional.
-        """
-        self.dataset = UTKFaceDataset(transform)
+    def createDataset(self, transform=None):
+        self.__prepareOnDisk()
+        self.dataset = UTKFaceDataset(directory=self.directory, feature='gender', transform=transform)
         return self.dataset
 
     def splitDataset(self, trainSize=0.7, validateSize=0.2, testSize=0.1):
-        """
-        Splits the dataset to three subsets for train, validation, and test.
-        The splitted dataset will be on:
-            self.trainDataset
-            self.validateDataset
-            self.testDataset
-        The usage of the returned value is optional.
-
-        Args:
-            trainSize: percentage of the main database to be allocated to *train* set
-            validateSize: percentage of the main database to be allocated to *validate* set
-            testSize: percentage of the main database to be allocated to *test* set
-
-        Returns:
-            [trainDataset, validateDataset, testDataset]
-        """
         if round(trainSize + validateSize + testSize, 1) != 1.0:
             sys.exit("Sum of the percentages should be equal to 1. it's " + str(
                 trainSize + validateSize + testSize) + " now!")
@@ -58,43 +33,15 @@ class UTKFaceClass:
         validateLen = int(len(self.dataset) * validateSize)
         testLen = len(self.dataset) - trainLen - validateLen
         self.trainDataset, self.validateDataset, self.testDataset = random_split(
-            self.dataset, [trainLen, validateLen, testLen], generator=torch.Generator().manual_seed(42))
+            self.dataset, [trainLen, validateLen, testLen])
 
-    def generateDataLoaders(self):
-        pass
+    def dataLoaders(self, batchSize=15):
+        trainLoader = DataLoader(self.trainDataset, batch_size=25)
+        validateLoader = DataLoader(self.validateDataset, batch_size=25)
+        testLoader = DataLoader(self.testDataset, batch_size=25)
+        return trainLoader, validateLoader, testLoader
 
-
-class UTKFaceDataset(Dataset):
-    def __init__(self, transform=None):
-        self.transform = transform
-
-        self.directory = os.path.join(config.absDatasetDir, 'UTKFace')
-        self.zipFile = os.path.join(config.absDatasetDir, 'UTKFace.tar.gz')
-        self.prepareOnDisk()
-        self.labels = []
-        self.imagesPath = []
-        for file in os.listdir(self.directory):
-            label = parse('{age}_{gender}_{}_{}.jpg.chip.jpg', file)
-            if label is not None:
-                self.imagesPath.append(file)
-                self.labels.append(int(label['gender']))
-        pass
-
-    def __len__(self):
-        return len(self.labels)
-
-    def __getitem__(self, idx):
-        if torch.is_tensor(idx):
-            idx = idx.tolist()
-        img_name = os.path.join(self.directory,
-                                self.imagesPath[idx])
-        image = Image.open(img_name)
-        image = image.resize((60, 60))
-        if self.transform is not None:
-            image = self.transform(image)
-        return image.to(config.device), self.labels[idx]
-
-    def prepareOnDisk(self):
+    def __prepareOnDisk(self):
         if os.path.exists(self.directory):
             if len(os.listdir(self.directory)) != 0:
                 print('UTK Already Exists on',
@@ -114,3 +61,107 @@ class UTKFaceDataset(Dataset):
         else:
             sys.exit('UTK Zip file not found!')
         pass
+
+
+class UTKFaceDataset(Dataset):
+    def __init__(self, directory=None, feature='gender', transform=None):
+        self.directory = directory
+        self.transform = transform
+        self.labels = []
+        self.imagesPath = []
+        for file in os.listdir(directory):
+            label = parse('{age}_{gender}_{}_{}.jpg.chip.jpg', file)
+            if label is not None:
+                self.imagesPath.append(file)
+                self.labels.append(int(label[feature]))
+        pass
+
+    def __len__(self):
+        return len(self.labels)
+
+    def __getitem__(self, idx):
+        if torch.is_tensor(idx):
+            idx = idx.tolist()
+        imagePath = os.path.join(self.directory,
+                                 self.imagesPath[idx])
+        image = Image.open(imagePath)
+        if self.transform is not None:
+            image = self.transform(image)
+        return image.to(config.device), self.labels[idx]
+
+
+class AgeDBClass:
+    def __init__(self):
+        self.directory = os.path.join(config.absDatasetDir, 'AgeDB')
+        self.zipFile = os.path.join(config.absDatasetDir, 'AgeDB.zip')
+        self.dataset = None
+        self.trainDataset = None
+        self.testDataset = None
+        self.validateDataset = None
+
+    def createDataset(self, transform=None):
+        self.__prepareOnDisk()
+        self.dataset = AgeDBDataset(directory=self.directory, feature='gender', transform=transform)
+        return self.dataset
+
+    def splitDataset(self, trainSize=0.7, validateSize=0.2, testSize=0.1):
+        if round(trainSize + validateSize + testSize, 1) != 1.0:
+            sys.exit("Sum of the percentages should be equal to 1. it's " + str(
+                trainSize + validateSize + testSize) + " now!")
+        trainLen = int(len(self.dataset) * trainSize)
+        validateLen = int(len(self.dataset) * validateSize)
+        testLen = len(self.dataset) - trainLen - validateLen
+        self.trainDataset, self.validateDataset, self.testDataset = random_split(
+            self.dataset, [trainLen, validateLen, testLen])
+
+    def dataLoaders(self, batchSize=15):
+        trainLoader = DataLoader(self.trainDataset, batch_size=batchSize)
+        validateLoader = DataLoader(self.validateDataset, batch_size=batchSize)
+        testLoader = DataLoader(self.testDataset, batch_size=batchSize)
+        return trainLoader, validateLoader, testLoader
+
+    def __prepareOnDisk(self):
+        if os.path.exists(self.directory):
+            if len(os.listdir(self.directory)) != 0:
+                print('AgeDB Already Exists on ' +
+                      self.directory + '.We will use it!')
+                return
+        print('Could not find AgeDB on', self.directory)
+        print('Looking for ', self.zipFile)
+        if os.path.exists(self.zipFile):
+            print(self.zipFile, 'is found. Trying to extract:')
+            with zipfile.ZipFile(self.zipFile) as zf:
+                zf.extractall(pwd=b'ibugAgeDBv2017a', path=config.absDatasetDir)
+            print('Successfully extracted')
+        else:
+            sys.exit('AgeDB Zip file not found!')
+
+
+class AgeDBDataset(Dataset):
+    def __init__(self, directory=None, feature='gender', transform=None):
+        self.directory = directory
+        self.transform = transform
+        classToId = {'m': 0, 'f': 1}
+        self.labels = []
+        self.imagesPath = []
+        for file in os.listdir(directory):
+            label = parse('{}_{}_{age}_{gender}.jpg', file)
+            if label is not None:
+                self.imagesPath.append(file)
+                self.labels.append(classToId[label[feature]])
+        pass
+
+    def __len__(self):
+        return len(self.labels)
+
+    def __getitem__(self, idx):
+        if torch.is_tensor(idx):
+            idx = idx.tolist()
+        imagePath = os.path.join(self.directory,
+                                 self.imagesPath[idx])
+        image = Image.open(imagePath)
+        if image.mode == 'L':
+            image = image.convert(mode='RGB')
+        if self.transform is not None:
+            image = self.transform(image)
+        return image.to(config.device), self.labels[idx]
