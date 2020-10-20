@@ -30,6 +30,7 @@ def main():
 
 
 def train(dataLoaders, numOfEpochs):
+    # Mostly from https://www.kaggle.com/basu369victor/pytorch-tutorial-the-classification
     trainLoader, validateLoader, testLoader = dataLoaders
     model = torch.hub.load('pytorch/vision:v0.6.0', 'resnet18', pretrained=False).to(config.device)
 
