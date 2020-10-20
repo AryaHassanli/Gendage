@@ -12,7 +12,8 @@ from config import config
 
 
 class UTKFaceClass:
-    def __init__(self):
+    def __init__(self, feature='gender'):
+        self.feature = feature
         self.directory = os.path.join(config.absDatasetDir, 'UTKFace')
         self.zipFile = os.path.join(config.absDatasetDir, 'UTKFace.tar.gz')
         self.dataset = None
@@ -22,7 +23,7 @@ class UTKFaceClass:
 
     def createDataset(self, transform=None):
         self.__prepareOnDisk()
-        self.dataset = UTKFaceDataset(directory=self.directory, feature='gender', transform=transform)
+        self.dataset = UTKFaceDataset(directory=self.directory, feature=self.feature, transform=transform)
         return self.dataset
 
     def splitDataset(self, trainSize=0.7, validateSize=0.2, testSize=0.1):
@@ -65,6 +66,7 @@ class UTKFaceClass:
 
 class UTKFaceDataset(Dataset):
     def __init__(self, directory=None, feature='gender', transform=None):
+        self.feature = feature
         self.directory = directory
         self.transform = transform
         self.labels = []
@@ -73,7 +75,7 @@ class UTKFaceDataset(Dataset):
             label = parse('{age}_{gender}_{}_{}.jpg.chip.jpg', file)
             if label is not None:
                 self.imagesPath.append(file)
-                self.labels.append(int(label[feature]))
+                self.labels.append(int(label[self.feature]))
         pass
 
     def __len__(self):
@@ -91,9 +93,10 @@ class UTKFaceDataset(Dataset):
 
 
 class AgeDBClass:
-    def __init__(self):
+    def __init__(self, feature='gender'):
         self.directory = os.path.join(config.absDatasetDir, 'AgeDB')
         self.zipFile = os.path.join(config.absDatasetDir, 'AgeDB.zip')
+        self.feature = feature
         self.dataset = None
         self.trainDataset = None
         self.testDataset = None
@@ -101,7 +104,7 @@ class AgeDBClass:
 
     def createDataset(self, transform=None):
         self.__prepareOnDisk()
-        self.dataset = AgeDBDataset(directory=self.directory, feature='gender', transform=transform)
+        self.dataset = AgeDBDataset(directory=self.directory, feature=self.feature, transform=transform)
         return self.dataset
 
     def splitDataset(self, trainSize=0.7, validateSize=0.2, testSize=0.1):
@@ -148,7 +151,7 @@ class AgeDBDataset(Dataset):
             label = parse('{}_{}_{age}_{gender}.jpg', file)
             if label is not None:
                 self.imagesPath.append(file)
-                self.labels.append(classToId[label[feature]])
+                self.labels.append(classToId[label['gender']] if feature == 'gender' else int(label['age']))
         pass
 
     def __len__(self):
