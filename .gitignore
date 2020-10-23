@@ -5,3 +5,4 @@ Dockerfile
 /.ps_project
 main_backup.py
 tmp/**
+.gitignore
