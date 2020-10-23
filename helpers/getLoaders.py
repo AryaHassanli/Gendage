@@ -1,5 +1,7 @@
 import torchvision.transforms as transforms
-from dataLoaders import UTKFaceClass, AgeDBClass
+
+from dataLoaders.UTKFace import UTKFaceClass
+from dataLoaders.AgeDB import AgeDBClass
 
 
 def getLoaders(dataset, feature, splitSize, batchSize):

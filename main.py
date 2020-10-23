@@ -6,8 +6,9 @@ import torch.nn as nn
 import torch.optim as optim
 
 from config import config
-from helpers.getLoaders import getLoaders
 from helpers.parseArguments import parseArguments
+from helpers.getLoaders import getLoaders
+from helpers.getNet import getNet
 
 # Handle arguments
 args = parseArguments()
@@ -32,10 +33,9 @@ def main():
 def train(dataLoaders, numOfEpochs):
     # Mostly from https://www.kaggle.com/basu369victor/pytorch-tutorial-the-classification
     trainLoader, validateLoader, testLoader = dataLoaders
-    model = torch.hub.load('pytorch/vision:v0.6.0', 'resnet18', pretrained=False).to(config.device)
+    model = getNet('resnet18')
 
     torch.backends.cudnn.benchmark = True
-    print(model)
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.Adam(model.parameters(), lr=0.0001)
 
@@ -49,7 +49,6 @@ def train(dataLoaders, numOfEpochs):
     total_step = len(trainLoader)
     for epoch in range(1, n_epochs + 1):
         running_loss = 0.0
-        # scheduler.step(epoch)
         correct = 0
         total = 0
         print(f'Epoch {epoch}\n')
@@ -93,7 +92,8 @@ def train(dataLoaders, numOfEpochs):
             # Saving the best weight
             if network_learned:
                 valid_loss_min = batch_loss
-                torch.save(model.state_dict(), os.path.join(config.outputDir, 'model_classification_tutorial.pt'))
+                torch.save(model.state_dict(),
+                           os.path.join(config.outputDir, args.dataset + '_' + args.feature + '_model.pt'))
                 print('Detected network improvement, saving current model')
         model.train()
 

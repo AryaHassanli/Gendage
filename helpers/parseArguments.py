@@ -10,13 +10,13 @@ def parseArguments():
                         metavar='function',
                         type=str,
                         choices=['train'],
-                        help='the function to execute'
+                        help='the function to execute. choices: %(choices)s'
                         )
     parser.add_argument('--dataset',
                         metavar='dataset',
                         type=str,
                         choices=['UTKFace', 'AgeDB'],
-                        help='select the database: %(choices)s',
+                        help='select the dataset: %(choices)s',
                         default='UTKFace'
                         )
     parser.add_argument('--feature',
