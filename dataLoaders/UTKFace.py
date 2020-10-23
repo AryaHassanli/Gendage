@@ -37,9 +37,9 @@ class UTKFaceClass:
             self.dataset, [trainLen, validateLen, testLen])
 
     def dataLoaders(self, batchSize=15):
-        trainLoader = DataLoader(self.trainDataset, batch_size=25)
-        validateLoader = DataLoader(self.validateDataset, batch_size=25)
-        testLoader = DataLoader(self.testDataset, batch_size=25)
+        trainLoader = DataLoader(self.trainDataset, batch_size=batchSize)
+        validateLoader = DataLoader(self.validateDataset, batch_size=batchSize)
+        testLoader = DataLoader(self.testDataset, batch_size=batchSize)
         return trainLoader, validateLoader, testLoader
 
     def __prepareOnDisk(self):
