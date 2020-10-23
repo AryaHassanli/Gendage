@@ -1,8 +1,6 @@
 /.idea
 Dockerfile
-/Datasets/**
 /models/**
 /.ps_project
 main_backup.py
 tmp/**
-.gitignore
