@@ -1,11 +1,14 @@
 import sys
-from nets.resnet18 import resnet18
+# noinspection PyUnresolvedReferences
+from nets import *
 
 
-def getNet(net):
-    if net == 'resnet18':
-        print('ResNet18 Found: ')
-        net = resnet18()
-        print(net)
-        return net
-    sys.exit('network not found')
+def getNet(netName):
+    net = getattr(eval(netName), netName)
+    if callable(net):
+        print(netName + " Found!")
+        net = net()
+    else:
+        sys.exit('network not found')
+
+    return net
