@@ -4,7 +4,7 @@ from dataLoaders import *
 
 
 def getLoaders(dataset, feature, splitSize, batchSize):
-    dataObj = eval(dataset+'Class(feature="' + feature + '")')
+    dataObj = eval(dataset+"."+dataset+'Class(feature="' + feature + '")')
     dataObj.createDataset(transform=transforms.Compose(
             [transforms.Resize((60, 60)),
              transforms.ToTensor(),
