@@ -57,6 +57,7 @@ class AgeDBClass:
             print('Successfully extracted')
         else:
             sys.exit('AgeDB Zip file not found!')
+            # TODO: In case of zip file is missing, simply download it!
 
 
 class AgeDBDataset(Dataset):
