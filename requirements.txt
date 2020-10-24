@@ -5,3 +5,7 @@ parse~=1.18.0
 scikit-image~=0.16.2
 pillow~=8.0.0
 torch~=1.6.0
+mmcv~=1.1.5
+opencv-python~=4.4.0.44
+ipython~=7.18.1
+facenet_pytorch
