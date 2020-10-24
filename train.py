@@ -1,9 +1,11 @@
 import os
+import time
 
 import numpy as np
 import torch
 import torch.nn as nn
 import torch.optim as optim
+import torchvision.transforms as transforms
 
 from config import config
 from helpers.getLoaders import getLoaders
@@ -24,11 +26,16 @@ def main():
     trainLoader, validateLoader, testLoader = getLoaders(dataset=args.dataset,
                                                          batchSize=args.batchSize,
                                                          feature=args.feature,
-                                                         splitSize=args.splitSize)
+                                                         splitSize=args.splitSize,
+                                                         transform=transforms.Compose(
+                                                             [transforms.Resize((60, 60)),
+                                                              transforms.ToTensor(),
+                                                              transforms.Normalize(mean=[0.485, 0.456, 0.406],
+                                                                                   std=[0.229, 0.224, 0.225])]))
     numOfEpochs = args.epochs
 
     # Mostly from https://www.kaggle.com/basu369victor/pytorch-tutorial-the-classification
-    model = getNet('resnet18')
+    model = getNet(args.net).to(config.device)
 
     torch.backends.cudnn.benchmark = True
     criterion = nn.CrossEntropyLoss()
@@ -42,6 +49,7 @@ def main():
     train_loss = []
     train_acc = []
     total_step = len(trainLoader)
+    startTime = time.time()
     for epoch in range(1, n_epochs + 1):
         running_loss = 0.0
         correct = 0
@@ -88,7 +96,8 @@ def main():
             if network_learned:
                 valid_loss_min = batch_loss
                 torch.save(model.state_dict(),
-                           os.path.join(config.outputDir, args.dataset + '_' + args.feature + '_model.pt'))
+                           os.path.join(config.outputDir,
+                                        args.net + '_' + args.dataset + '_' + args.feature + '_model.pt'))
                 print('Detected network improvement, saving current model')
         model.train()
 
@@ -107,6 +116,7 @@ def main():
             total_t += target_t.size(0)
         val_loss.append(batch_loss / len(validateLoader))
         print(f'test acc: {(100 * correct_t / total_t):.4f}\n')
+    print("Total Time:{}s".format(time.time() - startTime))
 
 
 if __name__ == '__main__':
