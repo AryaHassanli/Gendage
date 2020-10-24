@@ -19,6 +19,13 @@ def parseArguments(function):
                             help='select the dataset: %(choices)s',
                             default='UTKFace'
                             )
+        parser.add_argument('--net',
+                            metavar='net',
+                            type=str,
+                            choices=['resnet18', 'mobilenet_v2', 'mobilenet_v3'],
+                            help='select the net: %(choices)s',
+                            default='mobilenet_v2'
+                            )
         parser.add_argument('--feature',
                             metavar='feature',
                             type=str,
