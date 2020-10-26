@@ -48,17 +48,18 @@ def demo(labelGenerator, inputFile, outputFile, detectionFPS, device):
         startTime = time.time()
         ret, frame = inputVideo.read()
         if frameNo % int(inputFPS / detectionFPS) == 0:
+            labels = []
             boxes, _ = mtcnn.detect(frame)
             for box in boxes:
                 box = box.astype(int)
                 x1, y1, x2, y2 = box
                 croppedFace = frame[y1:y2, x1:x2]
-                labels = labelGenerator(croppedFace)
-        for box in boxes:
+                labels.append(labelGenerator(croppedFace))
+        for i, box in enumerate(boxes):
             box = box.astype(int)
             x1, y1, x2, y2 = box
             frame = cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0))
-            cv2.putText(frame, ' '.join(labels), (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+            cv2.putText(frame, ' '.join(labels[i]), (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
 
         #cv2.imshow('frame', frame)
         outputVideo.write(frame)
