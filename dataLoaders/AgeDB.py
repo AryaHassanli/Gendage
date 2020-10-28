@@ -7,8 +7,10 @@ import torch
 from PIL import Image
 from parse import parse
 from torch.utils.data import Dataset, random_split, DataLoader
+import numpy as np
 
 from config import config
+from facenet_pytorch import MTCNN
 
 
 class AgeDBClass:
@@ -64,14 +66,43 @@ class AgeDBDataset(Dataset):
     def __init__(self, directory=None, feature='gender', transform=None):
         self.directory = directory
         self.transform = transform
-        classToId = {'m': 0, 'f': 1}
+        genderToClassId = {'m': 0, 'f': 1}
         self.labels = []
         self.imagesPath = []
+        self.mtcnn = MTCNN(keep_all=True, device=config.device)
         for file in os.listdir(directory):
             label = parse('{}_{}_{age}_{gender}.jpg', file)
             if label is not None:
                 self.imagesPath.append(file)
-                self.labels.append(classToId[label['gender']] if feature == 'gender' else int(label['age']))
+                if feature == 'gender':
+                    self.labels.append(genderToClassId[label['gender']])
+                elif feature == 'age':
+                    age = int(label['age'])
+                    # self.labels.append(age)
+
+                    if 0 <= age < 2:
+                        self.labels.append(0)
+                    elif 2 <= age < 5:
+                        self.labels.append(1)
+                    elif 5 <= age < 9:
+                        self.labels.append(2)
+                    elif 9 <= age < 16:
+                        self.labels.append(3)
+                    elif 16 <= age < 20:
+                        self.labels.append(4)
+                    elif 20 <= age < 30:
+                        self.labels.append(5)
+                    elif 30 <= age < 40:
+                        self.labels.append(6)
+                    elif 40 <= age < 50:
+                        self.labels.append(7)
+                    elif 50 <= age < 60:
+                        self.labels.append(8)
+                    elif 60 <= age < 70:
+                        self.labels.append(9)
+                    elif 70 <= age:
+                        self.labels.append(10)
+
         pass
 
     def __len__(self):
@@ -83,6 +114,9 @@ class AgeDBDataset(Dataset):
         imagePath = os.path.join(self.directory,
                                  self.imagesPath[idx])
         image = Image.open(imagePath)
+        #image = np.array(image)
+        #print(image.shape)
+        # boxes, _ = self.mtcnn.detect(image)
         if image.mode == 'L':
             image = image.convert(mode='RGB')
         if self.transform is not None:
