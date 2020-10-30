@@ -28,10 +28,12 @@ def main():
                                                          feature=args.feature,
                                                          splitSize=args.splitSize,
                                                          transform=transforms.Compose(
-                                                             [transforms.Resize((60, 60)),
+                                                             [transforms.Resize((100, 100)),
                                                               transforms.ToTensor(),
                                                               transforms.Normalize(mean=[0.485, 0.456, 0.406],
-                                                                                   std=[0.229, 0.224, 0.225])]))
+                                                                                   std=[0.229, 0.224, 0.225])]),
+                                                         usePreProcessed=1)
+
     numOfEpochs = args.epochs
 
     # Mostly from https://www.kaggle.com/basu369victor/pytorch-tutorial-the-classification
