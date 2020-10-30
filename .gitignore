@@ -5,3 +5,5 @@ Dockerfile
 main_backup.py
 tmp/**
 output/**
+inputSamples/**
+/identities/**

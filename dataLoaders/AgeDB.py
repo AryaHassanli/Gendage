@@ -1,16 +1,16 @@
 import os
+import shutil
 import sys
-import tarfile
 import zipfile
 
+import numpy as np
 import torch
 from PIL import Image
+from facenet_pytorch import MTCNN
 from parse import parse
 from torch.utils.data import Dataset, random_split, DataLoader
-import numpy as np
 
 from config import config
-from facenet_pytorch import MTCNN
 
 
 class AgeDBClass:
@@ -22,10 +22,14 @@ class AgeDBClass:
         self.trainDataset = None
         self.testDataset = None
         self.validateDataset = None
+        self.usePreProcessed = None
+        self.forcePreProcess = None
 
-    def createDataset(self, transform=None):
+    def createDataset(self, transform=None, usePreProcessed=1):
+        self.usePreProcessed = usePreProcessed
         self.__prepareOnDisk()
-        self.dataset = AgeDBDataset(directory=self.directory, feature=self.feature, transform=transform)
+        self.dataset = AgeDBDataset(directory=self.directory, feature=self.feature, transform=transform,
+                                    usePreProcessed=self.usePreProcessed)
         return self.dataset
 
     def splitDataset(self, trainSize=0.7, validateSize=0.2, testSize=0.1):
@@ -63,46 +67,52 @@ class AgeDBClass:
 
 
 class AgeDBDataset(Dataset):
-    def __init__(self, directory=None, feature='gender', transform=None):
-        self.directory = directory
+    def __init__(self, directory=None, feature='gender', transform=None, usePreProcessed=None):
+        self.directory = directory if usePreProcessed == 0 else os.path.join(directory, 'preProcessed')
         self.transform = transform
         genderToClassId = {'m': 0, 'f': 1}
         self.labels = []
-        self.imagesPath = []
+        self.images = []
         self.mtcnn = MTCNN(keep_all=True, device=config.device)
-        for file in os.listdir(directory):
+
+        for file in os.listdir(self.directory):
             label = parse('{}_{}_{age}_{gender}.jpg', file)
-            if label is not None:
-                self.imagesPath.append(file)
-                if feature == 'gender':
-                    self.labels.append(genderToClassId[label['gender']])
-                elif feature == 'age':
-                    age = int(label['age'])
-                    # self.labels.append(age)
+            if label is None:
+                continue
+            image = Image.open(os.path.join(self.directory, file))
+            if self.transform is not None:
+                image = self.transform(image)
+            self.images.append(image.to(config.device))
 
-                    if 0 <= age < 2:
-                        self.labels.append(0)
-                    elif 2 <= age < 5:
-                        self.labels.append(1)
-                    elif 5 <= age < 9:
-                        self.labels.append(2)
-                    elif 9 <= age < 16:
-                        self.labels.append(3)
-                    elif 16 <= age < 20:
-                        self.labels.append(4)
-                    elif 20 <= age < 30:
-                        self.labels.append(5)
-                    elif 30 <= age < 40:
-                        self.labels.append(6)
-                    elif 40 <= age < 50:
-                        self.labels.append(7)
-                    elif 50 <= age < 60:
-                        self.labels.append(8)
-                    elif 60 <= age < 70:
-                        self.labels.append(9)
-                    elif 70 <= age:
-                        self.labels.append(10)
-
+            if feature == 'gender':
+                self.labels.append(genderToClassId[label['gender']])
+            elif feature == 'age':
+                age = int(label['age'])
+                self.labels.append(age)
+                """
+                if 0 <= age < 2:
+                    self.labels.append(0)
+                elif 2 <= age < 5:
+                    self.labels.append(1)
+                elif 5 <= age < 9:
+                    self.labels.append(2)
+                elif 9 <= age < 16:
+                    self.labels.append(3)
+                elif 16 <= age < 20:
+                    self.labels.append(4)
+                elif 20 <= age < 30:
+                    self.labels.append(5)
+                elif 30 <= age < 40:
+                    self.labels.append(6)
+                elif 40 <= age < 50:
+                    self.labels.append(7)
+                elif 50 <= age < 60:
+                    self.labels.append(8)
+                elif 60 <= age < 70:
+                    self.labels.append(9)
+                elif 70 <= age:
+                    self.labels.append(10)
+                """
         pass
 
     def __len__(self):
@@ -111,14 +121,5 @@ class AgeDBDataset(Dataset):
     def __getitem__(self, idx):
         if torch.is_tensor(idx):
             idx = idx.tolist()
-        imagePath = os.path.join(self.directory,
-                                 self.imagesPath[idx])
-        image = Image.open(imagePath)
-        #image = np.array(image)
-        #print(image.shape)
-        # boxes, _ = self.mtcnn.detect(image)
-        if image.mode == 'L':
-            image = image.convert(mode='RGB')
-        if self.transform is not None:
-            image = self.transform(image)
+        image = self.images[idx]
         return image.to(config.device), self.labels[idx]
