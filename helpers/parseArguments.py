@@ -7,6 +7,17 @@ def parseArguments(function):
         parser.add_argument('-G', '--gradient',
                             action='store_true',
                             help='to run on gradient')
+    if function == 'preprocess':
+        parser.add_argument('-G', '--gradient',
+                            action='store_true',
+                            help='to run on gradient')
+        parser.add_argument('--dataset',
+                            metavar='dataset',
+                            type=str,
+                            choices=['UTKFace', 'AgeDB'],
+                            help='select the dataset: %(choices)s',
+                            default='AgeDB'
+                            )
 
     if function == 'train':
         parser.add_argument('-G', '--gradient',
@@ -17,12 +28,12 @@ def parseArguments(function):
                             type=str,
                             choices=['UTKFace', 'AgeDB'],
                             help='select the dataset: %(choices)s',
-                            default='UTKFace'
+                            default='AgeDB'
                             )
         parser.add_argument('--net',
                             metavar='net',
                             type=str,
-                            choices=['resnet18', 'mobilenet_v2', 'mobilenet_v3'],
+                            choices=['resnet18', 'resnet50', 'mobilenet_v2', 'mobilenet_v3'],
                             help='select the net: %(choices)s',
                             default='mobilenet_v2'
                             )

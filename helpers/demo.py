@@ -4,14 +4,14 @@ import cv2
 from facenet_pytorch import MTCNN
 
 
-def demo(labelGenerator, inputFile, outputFile, detectionFPS, device):
+def demo(labelGenerators, inputFile, outputFile, detectionFPS, device):
     """
     This 'demo' captures the inputFile and detects faces on it. Then, passes each cropped face to labelGenerator
     function and retrieves list of labels to put over that face on the original frame. The output video file will be
     saved as outputFile.
 
     Args:
-        labelGenerator: function that receives a cropped face, and returns list of labels
+        labelGenerators: list of functions that receive a cropped face, and returns a list of labels
         inputFile: path to the input video
         outputFile: path to the output video
         detectionFPS: the fps of processing faces.
@@ -54,14 +54,17 @@ def demo(labelGenerator, inputFile, outputFile, detectionFPS, device):
                 box = box.astype(int)
                 x1, y1, x2, y2 = box
                 croppedFace = frame[y1:y2, x1:x2]
-                labels.append(labelGenerator(croppedFace))
+                faceLabels = []
+                for labelGenerator in labelGenerators:
+                    faceLabels += labelGenerator(croppedFace)
+                labels.append(faceLabels)
         for i, box in enumerate(boxes):
             box = box.astype(int)
             x1, y1, x2, y2 = box
             frame = cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0))
             cv2.putText(frame, ' '.join(labels[i]), (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
 
-        #cv2.imshow('frame', frame)
+        # cv2.imshow('frame', frame)
         outputVideo.write(frame)
         endTime = time.time()
         executionTime = endTime - startTime
