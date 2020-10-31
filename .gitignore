@@ -7,3 +7,4 @@ tmp/**
 output/**
 inputSamples/**
 /identities/**
+/faceRecognition/**
