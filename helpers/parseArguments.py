@@ -18,7 +18,12 @@ def parseArguments(function):
                             help='select the dataset: %(choices)s',
                             default='AgeDB'
                             )
+    if function == 'run':
+        parser.add_argument('-G', '--gradient',
+                            action='store_true',
+                            help='to run on gradient')
 
+        pass
     if function == 'train':
         parser.add_argument('-G', '--gradient',
                             action='store_true',
