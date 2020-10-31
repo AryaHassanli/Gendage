@@ -1,7 +1,4 @@
-import os
-
 from config import config
-from helpers.demo import demo
 from helpers.parseArguments import parseArguments
 
 # Handle arguments
@@ -14,13 +11,8 @@ else:
                outputDir='output')
 
 
-
 def main():
-    demo(lambda x: ['hi'],
-         os.path.join(config.baseDir, 'inputSamples/Recording.mp4'),
-         os.path.join(config.outputDir, 'result.avi'),
-         2,
-         config.device)
+    pass
 
 
 if __name__ == '__main__':
