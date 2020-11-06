@@ -5,7 +5,7 @@ with open('options/train.json') as json_file:
     trainOptions = json.load(json_file)
 
 
-def parseArguments(function):
+def parse(function):
     parser = argparse.ArgumentParser(description='', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     if function == 'main':
         parser.add_argument('-G', '--gradient',

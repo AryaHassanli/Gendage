@@ -10,15 +10,15 @@ import torch.nn as nn
 import torch.optim as optim
 import torchvision.transforms as transforms
 from torch.nn import MSELoss
-from torch.optim import SGD, Adam
+from torch.optim import SGD
 
 from config import config
-from helpers.getDatasetHandler import getDatasetHandler
-from helpers.getNet import getNet
-from helpers.parseArguments import parseArguments
+from helpers import parseArguments
+from helpers import getDatasetHandler
+from helpers import getNet
 
 # Handle arguments
-args = parseArguments('train')
+args = parseArguments.parse('train')
 outputSubDir = '_'.join(
     [datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S"), args.net, args.task, args.dataset, args.feature, args.tag])
 if args.gradient:
@@ -51,7 +51,7 @@ log.info(str(kwargs))
 
 
 def main():
-    datasetHandler = getDatasetHandler(dataset=args.dataset)
+    datasetHandler = getDatasetHandler.get(dataset=args.dataset)
     datasetHandler.createDataset(feature=args.feature,
                                  transform=transforms.Compose([
                                      transforms.Resize((60, 60)),
@@ -65,7 +65,7 @@ def main():
 
     numOfEpochs = args.epochs
 
-    model = getNet(args.net, **kwargs).to(config.device)
+    model = getNet.get(args.net, **kwargs).to(config.device)
 
     torch.backends.cudnn.benchmark = True
     # Mostly from https://www.kaggle.com/basu369victor/pytorch-tutorial-the-classification

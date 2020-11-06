@@ -2,6 +2,6 @@
 from dataLoaders import *
 
 
-def getDatasetHandler(dataset):
+def get(dataset):
     dataObj = eval(dataset+"."+dataset+'Handler()')
     return dataObj

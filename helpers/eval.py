@@ -5,7 +5,7 @@ import torchvision.transforms as transforms
 from PIL import Image
 
 from config import config
-from helpers.getNet import getNet
+from helpers import getNet
 
 genderModel = None
 ageModel = None
@@ -39,12 +39,12 @@ def gendageV1(face):
     """
     global genderModel, ageModel
     if genderModel is None:
-        genderModel = getNet('resnet18')
+        genderModel = getNet.get('resnet18')
         genderModel.load_state_dict(
             torch.load('D:/MsThesis/0-gender/resnet18_AgeDB_gender_model/resnet18_AgeDB_gender_model.pt'))
         genderModel.eval()
     if ageModel is None:
-        ageModel = getNet('resnet50')
+        ageModel = getNet.get('resnet50')
         ageModel.load_state_dict(
             torch.load('D:/MsThesis/1-age/AgeClasses_resnet50_AgeDB/resnet50_AgeDB_age_model.pt'))
         ageModel.eval()
@@ -94,7 +94,7 @@ def gendageV2(face):
     """
     global ageModel
     if ageModel is None:
-        ageModel = getNet('mobilenet_v3', mode='small', n_class=1)
+        ageModel = getNet.get('mobilenet_v3', mode='small', n_class=1)
         ageModel.load_state_dict(
             torch.load('D:/Gendage/output/2020-11-03_19-27-36_mobilenet_v3_regression_AgeDB_age_momentum/model.pt')
         )

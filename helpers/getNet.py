@@ -3,7 +3,7 @@ import sys
 from nets import *
 
 
-def getNet(netName, **kwargs):
+def get(netName, **kwargs):
     net = getattr(eval(netName), netName)
     if callable(net):
         print(netName + " Found!")

@@ -5,10 +5,10 @@ from facenet_pytorch import MTCNN
 
 from config import config
 from helpers import eval
-from helpers.parseArguments import parseArguments
-from helpers.demo import demo
+from helpers import parseArguments
+from helpers import demo
 
-args = parseArguments('main')
+args = parseArguments.parse('run')
 if args.gradient:
     config.set(datasetDir='/storage/datasets',
                outputDir='/artifacts')
@@ -22,7 +22,7 @@ newAge = eval.newAge
 
 def main():
     """
-    demo(online=1,
+    demo.process(online=1,
          labelGenerators=[newAge],
          inputFile='D:/MsThesis/inputSamples/Recording.mp4',
          outputFile='output/result.avi',
