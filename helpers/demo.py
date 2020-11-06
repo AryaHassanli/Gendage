@@ -3,7 +3,12 @@ import sys
 import time
 
 import cv2
+import numpy as np
 from facenet_pytorch import MTCNN
+
+from config import config
+
+mtcnn = MTCNN(keep_all=True, device=config.device)
 
 
 def demo(online, labelGenerators, inputFile, outputFile, detectionFPS, device):
@@ -60,7 +65,7 @@ def demo(online, labelGenerators, inputFile, outputFile, detectionFPS, device):
     while inputVideo.isOpened() and ret:
         __log.frameBegin()
         frameNo += 1
-
+        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         if frameNo % detectionFPInput == 0:
             __log.detectBegin()
             faces.clear()
@@ -77,6 +82,7 @@ def demo(online, labelGenerators, inputFile, outputFile, detectionFPS, device):
 
                 __log.detectEnd(len(faces))
 
+        frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
         if faces:
             for face in faces:
                 __putLabels(frame, face)
@@ -98,7 +104,7 @@ def demo(online, labelGenerators, inputFile, outputFile, detectionFPS, device):
 
 
 def __detect(frame, device):
-    mtcnn = MTCNN(keep_all=True, device=device)
+    global mtcnn
     boxes, _ = mtcnn.detect(frame)
     faces = []
     if boxes is None:
