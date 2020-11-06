@@ -1,0 +1,10 @@
+{
+  "gradient":   false,
+  "dataset":    "AgeDB",
+  "net":        "mobilenet_v3",
+  "task":       "regression",
+  "feature":    "age",
+  "splitSize":  [0.5, 0.4, 0.1],
+  "batchSize":  128,
+  "epochs":     40
+}
