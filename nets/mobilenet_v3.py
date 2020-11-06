@@ -117,7 +117,7 @@ class MobileBottleneck(nn.Module):
 
 
 class MobileNetV3(nn.Module):
-    def __init__(self, n_class=1000, input_size=224, dropout=0.8, mode='small', width_mult=1.0):
+    def __init__(self, n_class=1000, input_size=224, dropout=0.8, mode='small', width_mult=1.0, **kwargs):
         super(MobileNetV3, self).__init__()
         input_channel = 16
         last_channel = 1280
@@ -232,6 +232,6 @@ def mobilenetv3(pretrained=False, **kwargs):
     return model
 
 
-def mobilenet_v3():
-    net = mobilenetv3().to(config.device)
+def mobilenet_v3(**kwargs):
+    net = mobilenetv3(**kwargs).to(config.device)
     return net
