@@ -7,10 +7,10 @@ from facenet_pytorch import MTCNN
 from parse import parse
 
 from config import config
-from helpers.parseArguments import parseArguments
+from helpers import parseArguments
 
 # Handle arguments
-args = parseArguments('train')
+args = parseArguments.parse('train')
 if args.gradient:
     config.set(datasetDir='/storage/datasets',
                outputDir='/artifacts')

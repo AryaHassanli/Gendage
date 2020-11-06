@@ -1,8 +1,8 @@
 from config import config
-from helpers.parseArguments import parseArguments
+from helpers import parseArguments
 
 # Handle arguments
-args = parseArguments('main')
+args = parseArguments.parse('main')
 if args.gradient:
     config.set(datasetDir='/storage/datasets',
                outputDir='/artifacts')
