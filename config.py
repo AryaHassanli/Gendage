@@ -28,6 +28,9 @@ class Config:
         self.datasetDir = datasetDir if datasetDir is not None else self.datasetDir
         self.absDatasetDir = self.datasetDir if os.path.isabs(self.datasetDir) else os.path.join(self.baseDir,
                                                                                                  self.datasetDir)
+        if outputDir is not None:
+            if not os.path.exists(outputDir):
+                os.makedirs(outputDir)
         self.outputDir = outputDir if outputDir is not None else self.outputDir
         self.absOutputDir = self.outputDir if os.path.isabs(self.outputDir) else os.path.join(self.baseDir,
                                                                                               self.outputDir)
