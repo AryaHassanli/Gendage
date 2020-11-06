@@ -3,11 +3,11 @@ import sys
 from nets import *
 
 
-def getNet(netName):
+def getNet(netName, **kwargs):
     net = getattr(eval(netName), netName)
     if callable(net):
         print(netName + " Found!")
-        net = net()
+        net = net(**kwargs)
     else:
         sys.exit('network not found')
 
