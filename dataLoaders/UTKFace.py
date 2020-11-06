@@ -11,9 +11,9 @@ from torch.utils.data import Dataset, random_split, DataLoader
 from config import config
 
 
-class UTKFaceClass:
-    def __init__(self, feature='gender'):
-        self.feature = feature
+class UTKFaceHandler:
+    def __init__(self):
+        self.feature = None
         self.directory = os.path.join(config.absDatasetDir, 'UTKFace')
         self.zipFile = os.path.join(config.absDatasetDir, 'UTKFace.tar.gz')
         self.dataset = None
@@ -21,12 +21,13 @@ class UTKFaceClass:
         self.testDataset = None
         self.validateDataset = None
 
-    def createDataset(self, transform=None):
+    def createDataset(self, feature, transform, **kwargs):
+        self.feature = feature
         self.__prepareOnDisk()
         self.dataset = UTKFaceDataset(directory=self.directory, feature=self.feature, transform=transform)
         return self.dataset
 
-    def splitDataset(self, trainSize=0.7, validateSize=0.2, testSize=0.1):
+    def splitDataset(self, trainSize=0.7, validateSize=0.2, testSize=0.1, **kwargs):
         if round(trainSize + validateSize + testSize, 1) != 1.0:
             sys.exit("Sum of the percentages should be equal to 1. it's " + str(
                 trainSize + validateSize + testSize) + " now!")
@@ -36,7 +37,7 @@ class UTKFaceClass:
         self.trainDataset, self.validateDataset, self.testDataset = random_split(
             self.dataset, [trainLen, validateLen, testLen])
 
-    def dataLoaders(self, batchSize=15):
+    def dataLoaders(self, batchSize=15, **kwargs):
         trainLoader = DataLoader(self.trainDataset, batch_size=batchSize)
         validateLoader = DataLoader(self.validateDataset, batch_size=batchSize)
         testLoader = DataLoader(self.testDataset, batch_size=batchSize)
@@ -65,7 +66,7 @@ class UTKFaceClass:
 
 
 class UTKFaceDataset(Dataset):
-    def __init__(self, directory=None, feature='gender', transform=None):
+    def __init__(self, directory, feature, transform):
         self.feature = feature
         self.directory = directory
         self.transform = transform
