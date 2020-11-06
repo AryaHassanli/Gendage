@@ -3,15 +3,13 @@ import sys
 import time
 
 import cv2
-import numpy as np
 from facenet_pytorch import MTCNN
 
 from config import config
+from helpers import faceDetector
 
-mtcnn = MTCNN(keep_all=True, device=config.device)
 
-
-def demo(online, labelGenerators, inputFile, outputFile, detectionFPS, device):
+def process(online, labelGenerators, inputFile, outputFile, detectionFPS, device):
     """
     This 'demo' captures the inputFile and detects faces on it. Then, passes each cropped face to labelGenerator
     functions and retrieves list of labels to put over that face on the original frame. The output video file will be
@@ -70,7 +68,7 @@ def demo(online, labelGenerators, inputFile, outputFile, detectionFPS, device):
             __log.detectBegin()
             faces.clear()
 
-            faces = __detect(frame, device)
+            faces = faceDetector.detect(frame)
             if faces:
                 for i, face in enumerate(faces):
                     faces[i]['image'] = __processFace(face['image'], device)
@@ -101,27 +99,6 @@ def demo(online, labelGenerators, inputFile, outputFile, detectionFPS, device):
     cv2.destroyAllWindows()
     __log.programEnd()
     return
-
-
-def __detect(frame, device):
-    global mtcnn
-    boxes, _ = mtcnn.detect(frame)
-    faces = []
-    if boxes is None:
-        return faces
-    for box in boxes:
-        box = box.astype(int)
-        x1, y1, x2, y2 = box
-        x1 = min(frame.shape[1], max(0, x1))
-        x2 = min(frame.shape[1], max(0, x2))
-        y1 = min(frame.shape[0], max(0, y1))
-        y2 = min(frame.shape[0], max(0, y2))
-        faces.append({
-            'box': (x1, y1, x2, y2),
-            'labels': [],
-            'image': frame[y1:y2, x1:x2]
-        })
-    return faces
 
 
 def __processFace(faceImage, device):
