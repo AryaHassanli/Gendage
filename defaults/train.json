@@ -1,0 +1,17 @@
+{
+  "gradient":         false,
+
+  "dataset":          "UTKFace",
+  "usePreprocessed":  false,
+  "preload":          true,
+
+  "net":              "resnet18",
+
+  "task":             "classification",
+  "feature":          "age",
+
+  "splitSize":        [0.8, 0.1, 0.1],
+  "batchSize":        128,
+  "epochs":           30,
+  "lr":               0.001
+}

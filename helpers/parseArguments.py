@@ -1,7 +1,7 @@
 import argparse
 import json
 
-with open('options/train.json') as json_file:
+with open('defaults/train.json') as json_file:
     trainOptions = json.load(json_file)
 
 
@@ -40,6 +40,17 @@ def parse(function):
                             choices=['UTKFace', 'AgeDB'],
                             help='select the dataset: %(choices)s',
                             default=trainOptions['dataset']
+                            )
+        parser.add_argument('--preload',
+                            action='store_true',
+                            help='preload the dataset to memory',
+                            default=trainOptions['preload']
+                            )
+        parser.add_argument('--usePreprocessed',
+                            action='store_true',
+                            help='use the preprocessed variation of the dataset. You have to first run preprocess.py '
+                                 'on it',
+                            default=trainOptions['usePreprocessed']
                             )
         parser.add_argument('--net',
                             metavar='net',
@@ -81,6 +92,12 @@ def parse(function):
                             type=int,
                             help='set the number of epochs',
                             default=trainOptions['epochs']
+                            )
+        parser.add_argument('--lr',
+                            metavar='lr',
+                            type=float,
+                            help='learning rate',
+                            default=trainOptions['lr']
                             )
         parser.add_argument('--tag',
                             metavar='tag',
