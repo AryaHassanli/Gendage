@@ -233,5 +233,5 @@ def mobilenetv3(pretrained=False, **kwargs):
 
 
 def mobilenet_v3(**kwargs):
-    net = mobilenetv3(**kwargs).to(config.device)
+    net = mobilenetv3(**kwargs)
     return net

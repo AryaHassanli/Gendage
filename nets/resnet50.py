@@ -4,8 +4,6 @@ import torch
 import torch.nn as nn
 from torch import Tensor
 
-from config import config
-
 __all__ = ['ResNet', 'resnet50']
 
 
@@ -265,4 +263,4 @@ def resnet50(pretrained: bool = False, progress: bool = True, **kwargs: Any) -> 
         progress (bool): If True, displays a progress bar of the download to stderr
     """
     return _resnet('resnet50', Bottleneck, [3, 4, 6, 3], pretrained, progress,
-                   **kwargs).to(config.device)
+                   **kwargs)
