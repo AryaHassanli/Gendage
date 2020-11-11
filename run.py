@@ -7,6 +7,7 @@ from config import config
 from helpers import eval
 from helpers import parseArguments
 from helpers import demo
+from helpers import getDatasetHandler
 
 args = parseArguments.parse('run')
 if args.gradient:
@@ -16,21 +17,21 @@ else:
     config.set(datasetDir="D:\\MsThesis\\datasets",
                outputDir='output')
 
-gendage = eval.genderAndAge
-newAge = eval.newAge
+#gendage = eval.genderAndAge
+newAge = eval.gendageV3
 
 
 def main():
     """
     demo.process(online=1,
-         labelGenerators=[newAge],
-         inputFile='D:/MsThesis/inputSamples/Recording.mp4',
-         outputFile='output/result.avi',
-         detectionFPS=5,
-         device=config.device)
+                 labelGenerators=[newAge],
+                 inputFile='D:/MsThesis/inputSamples/Recording.mp4',
+                 outputFile='output/result.avi',
+                 detectionFPS=5,
+                 device=config.device)
     """
-
-    image = Image.open('inputSamples/105_PaulAnka_18_m.jpg')
+    """
+    image = Image.open('D:/MsThesis/inputSamples/25_0_1_20170113151354352.jpg.chip.jpg')
     image = np.array(image)
     face = image
     mtcnn = MTCNN(keep_all=True, device=config.device)
@@ -51,10 +52,25 @@ def main():
             'image': image[y1:y2, x1:x2]
         })
     face = faces[0]['image']
-    age = eval.newAge(face)
+    image = Image.fromarray(face)
+    transform = transforms.Compose([
+        transforms.Resize((100, 100)),
+        transforms.Grayscale(3),
+        transforms.Pad(10),
+        transforms.ToTensor(),
+    ])
+    image = transform(image)
+    face = image.
+    age = eval.gendageV2(face)
     print(age)
     """
-    """
+
+    image = Image.open('D:/MsThesis/inputSamples/Ale - Copy.jpg')
+    print(eval.gendageV3(image))
+
+
+
+
 
 if __name__ == '__main__':
     main()

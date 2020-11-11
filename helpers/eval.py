@@ -1,9 +1,10 @@
 import time
 
 import torch
+import torch.nn.functional as F
 import torchvision.transforms as transforms
 from PIL import Image
-
+import numpy as np
 from config import config
 from helpers import getNet
 
@@ -94,33 +95,69 @@ def gendageV2(face):
     """
     global ageModel
     if ageModel is None:
-        ageModel = getNet.get('mobilenet_v3', mode='small', n_class=1)
+        ageModel = getNet.get('resnet18', mode='small', n_class=118, num_classes=118).to(config.device)
         ageModel.load_state_dict(
-            torch.load('D:/Gendage/output/2020-11-03_19-27-36_mobilenet_v3_regression_AgeDB_age_momentum/model.pt')
+            torch.load('D:/Gendage/output/model3.pt')
         )
         ageModel.eval()
+    with torch.no_grad():
+        global totalError, totalFaces, totalTime, ageLabels
+        transform = transforms.Compose([
+            transforms.Resize((100, 100)),
+            transforms.Grayscale(3),
+            transforms.Pad(10),
+            transforms.ToTensor(),
+        ])
 
-    global totalError, totalFaces, totalTime, ageLabels
-    transform = transforms.Compose(
-        [transforms.Resize((100, 100)),
-         transforms.ToTensor(),
-         transforms.Normalize(mean=[0.485, 0.456, 0.406],
-                              std=[0.229, 0.224, 0.225])])
-    face = Image.fromarray(face)
-    x, y = face.size
-    size = max(x, y)
-    faceSq = Image.new('RGB', (size, size), (0, 0, 0))
-    faceSq.paste(face, (int((size - x) / 2), int((size - y) / 2)))
-    faceSq = transform(faceSq)
-    faceSq = faceSq.unsqueeze(0).to(config.device)
+        face = Image.fromarray(face)
+        x, y = face.size
+        size = max(x, y)
+        # faceSq = Image.new('RGB', (size, size), (0, 0, 0))
+        # faceSq.paste(face, (int((size - x) / 2), int((size - y) / 2)))
+        faceSq = face
+        faceSq = transform(faceSq)
+        faceSq = faceSq.unsqueeze(0).to(config.device)
 
-    startTime = time.time()
+        startTime = time.time()
 
-    age = ageModel(faceSq)
-    age = str(round(age.item(), 1))
+        outputs = F.softmax(ageModel(faceSq), dim=-1).cpu().numpy()
+        ages = np.arange(0, 118)
+        predicted_ages = (outputs * ages).sum(axis=-1)
+        age = predicted_ages[0]
+        age = str(age)
+        """
+        age = ageModel(faceSq)
+        _, age = torch.max(age, dim=1)
+        age = str(round(age.item(), 1))
+        """
+        endTime = time.time()
 
-    endTime = time.time()
+        totalFaces += 1
+        totalTime += endTime - startTime
+    return [age]
 
-    totalFaces += 1
-    totalTime += endTime - startTime
+
+def gendageV3(face):
+    global ageModel
+    if ageModel is None:
+        ageModel = getNet.get('resnet18', mode='small', n_class=118, num_classes=118).to(config.device)
+        ageModel.load_state_dict(
+            torch.load('D:/Gendage/output/model4.pt')
+        )
+        ageModel.eval()
+    with torch.no_grad():
+        global totalError, totalFaces, totalTime, ageLabels
+        transforms.Compose([
+            transforms.Resize((100, 100)),
+            transforms.Pad(10),
+            transforms.ToTensor(),
+            transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
+        ])
+        face = transform(face)
+        face = face.unsqueeze(0).to(config.device)
+        outputs = F.softmax(ageModel(face), dim=-1).cpu().numpy()
+        ages = np.arange(0, 118)
+        predicted_ages = (outputs * ages).sum(axis=-1)
+        age = predicted_ages[0]
+        age = str(age)
     return [age]

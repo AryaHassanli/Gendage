@@ -7,6 +7,7 @@ from facenet_pytorch import MTCNN
 
 from config import config
 from helpers import faceDetector
+from PIL import Image
 
 
 def process(online, labelGenerators, inputFile, outputFile, detectionFPS, device):
@@ -76,7 +77,7 @@ def process(online, labelGenerators, inputFile, outputFile, detectionFPS, device
 
                 for labelGenerator in labelGenerators:
                     for face in faces:
-                        face['labels'] += labelGenerator(face['image'])
+                        face['labels'] += labelGenerator(Image.fromarray(face['image']))
 
                 __log.detectEnd(len(faces))
 
