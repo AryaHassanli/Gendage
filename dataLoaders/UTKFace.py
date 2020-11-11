@@ -55,24 +55,28 @@ class UTKFaceDataset(Dataset):
         self.directory = directory
         self.transform = transform
         self.labels = []
-        self.imagesPath = []
         self.images = []
         self.preload = kwargs.get('preload', 0)
-        if self.preload:
-            for file in os.listdir(directory):
-                label = parse('{age}_{gender}_{}_{}.jpg.chip.jpg', file)
-                if label is not None:
-                    self.labels.append(int(label[self.feature]))
+
+        for file in os.listdir(directory):
+            fileLabels = parse('{age}_{gender}_{}_{}.jpg.chip.jpg', file)
+            if fileLabels is not None:
+                if self.preload:
                     image = Image.open(os.path.join(self.directory, file))
                     if self.transform is not None:
-                        image = self.transform(image)
-                    self.images.append(image.to(config.device))
-        else:
-            for file in os.listdir(directory):
-                label = parse('{age}_{gender}_{}_{}.jpg.chip.jpg', file)
-                if label is not None:
-                    self.imagesPath.append(file)
-                    self.labels.append(int(label[self.feature]))
+                        image = self.transform(image).to(config.device)
+                else:
+                    image = os.path.join(self.directory, file)
+
+                self.images.append(image)
+                self.labels.append({
+                    'age': int(fileLabels['age']),
+                    'gender': int(fileLabels['gender']),
+                    'age_gender': {
+                        'age': int(fileLabels['age']),
+                        'gender': int(fileLabels['gender'])
+                    }
+                })
         pass
 
     def __len__(self):
@@ -81,12 +85,12 @@ class UTKFaceDataset(Dataset):
     def __getitem__(self, idx):
         if torch.is_tensor(idx):
             idx = idx.tolist()
-        if self.preload:
-            return self.images[idx].to(config.device), self.labels[idx]
-        else:
-            imagePath = os.path.join(self.directory,
-                                     self.imagesPath[idx])
-            image = Image.open(imagePath)
+
+        image = self.images[idx]
+
+        if not self.preload:
+            image = Image.open(image)
             if self.transform is not None:
-                image = self.transform(image)
-            return image.to(config.device), self.labels[idx]
+                image = self.transform(image).to(config.device)
+
+        return image.to(config.device), self.labels[idx][self.feature]

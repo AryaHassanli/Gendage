@@ -69,7 +69,7 @@ def parse(function):
         parser.add_argument('--feature',
                             metavar='feature',
                             type=str,
-                            choices=['age', 'gender'],
+                            choices=['age', 'gender', 'age_gender'],
                             help='select the feature: %(choices)s',
                             default=trainOptions['feature']
                             )
