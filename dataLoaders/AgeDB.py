@@ -25,30 +25,12 @@ class AgeDBHandler(DatasetHandler):
 
     def createDataset(self, feature, transform, **kwargs):
         self.feature = feature
-        self.usePreProcessed = kwargs.get('usePreProcessed', 1)
         self.__prepareOnDisk()
         self.dataset = AgeDBDataset(directory=self.directory,
                                     feature=feature,
                                     transform=transform,
-                                    usePreProcessed=self.usePreProcessed,
                                     **kwargs)
         return self.dataset
-
-    def splitDataset(self, trainSize=0.7, validateSize=0.2, testSize=0.1, **kwargs):
-        if round(trainSize + validateSize + testSize, 1) != 1.0:
-            sys.exit("Sum of the percentages should be equal to 1. it's " + str(
-                trainSize + validateSize + testSize) + " now!")
-        trainLen = int(len(self.dataset) * trainSize)
-        validateLen = int(len(self.dataset) * validateSize)
-        testLen = len(self.dataset) - trainLen - validateLen
-        self.trainDataset, self.validateDataset, self.testDataset = random_split(
-            self.dataset, [trainLen, validateLen, testLen])
-
-    def dataLoaders(self, batchSize=15, **kwargs):
-        trainLoader = DataLoader(self.trainDataset, batch_size=batchSize)
-        validateLoader = DataLoader(self.validateDataset, batch_size=batchSize)
-        testLoader = DataLoader(self.testDataset, batch_size=batchSize)
-        return trainLoader, validateLoader, testLoader
 
     def __prepareOnDisk(self):
         if os.path.exists(self.directory):
@@ -75,25 +57,39 @@ class AgeDBDataset(Dataset):
         genderToClassId = {'m': 0, 'f': 1}
         self.labels = []
         self.imagePath = []
-
+        self.images = []
         self.minAge = 1000
         self.maxAge = 0
 
-        for i, file in enumerate(os.listdir(self.directory)):
-            if kwargs.get('reduced', 0):
-                if i % 20:
+        self.preload = kwargs.get('preload', 0)
+        if self.preload:
+            for i, file in enumerate(os.listdir(self.directory)):
+                label = parse('{}_{}_{age}_{gender}.jpg', file)
+                if label is None:
                     continue
-            label = parse('{}_{}_{age}_{gender}.jpg', file)
-            if label is None:
-                continue
-            self.imagePath.append(os.path.join(self.directory, file))
-            if feature == 'gender':
-                self.labels.append(genderToClassId[label['gender']])
-            elif feature == 'age':
-                age = int(label['age'])
-                self.labels.append(age)
-                self.maxAge = age if age > self.maxAge else self.maxAge
-                self.minAge = age if age < self.minAge else self.minAge
+                image = Image.open(os.path.join(self.directory, file))
+                if self.transform is not None:
+                    image = self.transform(image)
+                self.images.append(image.to(config.device))
+
+                if feature == 'gender':
+                    self.labels.append(genderToClassId[label['gender']])
+                elif feature == 'age':
+                    age = int(label['age'])
+                    self.labels.append(age)
+        else:
+            for i, file in enumerate(os.listdir(self.directory)):
+                label = parse('{}_{}_{age}_{gender}.jpg', file)
+                if label is None:
+                    continue
+                self.imagePath.append(os.path.join(self.directory, file))
+                if feature == 'gender':
+                    self.labels.append(genderToClassId[label['gender']])
+                elif feature == 'age':
+                    age = int(label['age'])
+                    self.labels.append(age)
+                    self.maxAge = age if age > self.maxAge else self.maxAge
+                    self.minAge = age if age < self.minAge else self.minAge
         pass
 
     def __len__(self):
@@ -102,7 +98,11 @@ class AgeDBDataset(Dataset):
     def __getitem__(self, idx):
         if torch.is_tensor(idx):
             idx = idx.tolist()
-        image = Image.open(self.imagePath[idx])
-        if self.transform is not None:
-            image = self.transform(image)
-        return image.to(config.device), self.labels[idx]
+        if self.preload:
+            image = self.images[idx]
+            return image.to(config.device), self.labels[idx]
+        else:
+            image = Image.open(self.imagePath[idx])
+            if self.transform is not None:
+                image = self.transform(image)
+            return image.to(config.device), self.labels[idx]

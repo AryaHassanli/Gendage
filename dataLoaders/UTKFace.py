@@ -1,17 +1,17 @@
 import os
 import sys
 import tarfile
-import zipfile
 
 import torch
 from PIL import Image
 from parse import parse
-from torch.utils.data import Dataset, random_split, DataLoader
+from torch.utils.data import Dataset
 
 from config import config
+from dataLoaders.datasetHandler import DatasetHandler
 
 
-class UTKFaceHandler:
+class UTKFaceHandler(DatasetHandler):
     def __init__(self):
         self.feature = None
         self.directory = os.path.join(config.absDatasetDir, 'UTKFace')
@@ -24,24 +24,8 @@ class UTKFaceHandler:
     def createDataset(self, feature, transform, **kwargs):
         self.feature = feature
         self.__prepareOnDisk()
-        self.dataset = UTKFaceDataset(directory=self.directory, feature=self.feature, transform=transform)
+        self.dataset = UTKFaceDataset(directory=self.directory, feature=self.feature, transform=transform, **kwargs)
         return self.dataset
-
-    def splitDataset(self, trainSize=0.7, validateSize=0.2, testSize=0.1, **kwargs):
-        if round(trainSize + validateSize + testSize, 1) != 1.0:
-            sys.exit("Sum of the percentages should be equal to 1. it's " + str(
-                trainSize + validateSize + testSize) + " now!")
-        trainLen = int(len(self.dataset) * trainSize)
-        validateLen = int(len(self.dataset) * validateSize)
-        testLen = len(self.dataset) - trainLen - validateLen
-        self.trainDataset, self.validateDataset, self.testDataset = random_split(
-            self.dataset, [trainLen, validateLen, testLen])
-
-    def dataLoaders(self, batchSize=15, **kwargs):
-        trainLoader = DataLoader(self.trainDataset, batch_size=batchSize)
-        validateLoader = DataLoader(self.validateDataset, batch_size=batchSize)
-        testLoader = DataLoader(self.testDataset, batch_size=batchSize)
-        return trainLoader, validateLoader, testLoader
 
     def __prepareOnDisk(self):
         if os.path.exists(self.directory):
@@ -66,17 +50,29 @@ class UTKFaceHandler:
 
 
 class UTKFaceDataset(Dataset):
-    def __init__(self, directory, feature, transform):
+    def __init__(self, directory, feature, transform, **kwargs):
         self.feature = feature
         self.directory = directory
         self.transform = transform
         self.labels = []
         self.imagesPath = []
-        for file in os.listdir(directory):
-            label = parse('{age}_{gender}_{}_{}.jpg.chip.jpg', file)
-            if label is not None:
-                self.imagesPath.append(file)
-                self.labels.append(int(label[self.feature]))
+        self.images = []
+        self.preload = kwargs.get('preload', 0)
+        if self.preload:
+            for file in os.listdir(directory):
+                label = parse('{age}_{gender}_{}_{}.jpg.chip.jpg', file)
+                if label is not None:
+                    self.labels.append(int(label[self.feature]))
+                    image = Image.open(os.path.join(self.directory, file))
+                    if self.transform is not None:
+                        image = self.transform(image)
+                    self.images.append(image.to(config.device))
+        else:
+            for file in os.listdir(directory):
+                label = parse('{age}_{gender}_{}_{}.jpg.chip.jpg', file)
+                if label is not None:
+                    self.imagesPath.append(file)
+                    self.labels.append(int(label[self.feature]))
         pass
 
     def __len__(self):
@@ -85,10 +81,12 @@ class UTKFaceDataset(Dataset):
     def __getitem__(self, idx):
         if torch.is_tensor(idx):
             idx = idx.tolist()
-        imagePath = os.path.join(self.directory,
-                                 self.imagesPath[idx])
-        image = Image.open(imagePath)
-        if self.transform is not None:
-            image = self.transform(image)
-        return image.to(config.device), self.labels[idx]
-
+        if self.preload:
+            return self.images[idx].to(config.device), self.labels[idx]
+        else:
+            imagePath = os.path.join(self.directory,
+                                     self.imagesPath[idx])
+            image = Image.open(imagePath)
+            if self.transform is not None:
+                image = self.transform(image)
+            return image.to(config.device), self.labels[idx]
