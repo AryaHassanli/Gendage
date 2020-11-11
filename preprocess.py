@@ -10,7 +10,7 @@ from config import config
 from helpers import parseArguments
 
 # Handle arguments
-args = parseArguments.parse('train')
+args = parseArguments.parse('preprocess')
 if args.gradient:
     config.set(datasetDir='/storage/datasets',
                outputDir='/artifacts')
