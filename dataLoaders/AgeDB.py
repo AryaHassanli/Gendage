@@ -5,7 +5,7 @@ import zipfile
 import torch
 from PIL import Image
 from parse import parse
-from torch.utils.data import Dataset, random_split, DataLoader
+from torch.utils.data import Dataset
 
 from config import config
 from dataLoaders.datasetHandler import DatasetHandler
@@ -56,40 +56,32 @@ class AgeDBDataset(Dataset):
         self.transform = transform
         genderToClassId = {'m': 0, 'f': 1}
         self.labels = []
-        self.imagePath = []
         self.images = []
-        self.minAge = 1000
-        self.maxAge = 0
-
+        self.feature = feature
         self.preload = kwargs.get('preload', 0)
-        if self.preload:
-            for i, file in enumerate(os.listdir(self.directory)):
-                label = parse('{}_{}_{age}_{gender}.jpg', file)
-                if label is None:
-                    continue
+
+        for i, file in enumerate(os.listdir(self.directory)):
+            fileLabels = parse('{}_{}_{age}_{gender}.jpg', file)
+            if fileLabels is None:
+                continue
+            if self.preload:
                 image = Image.open(os.path.join(self.directory, file))
                 if self.transform is not None:
-                    image = self.transform(image)
-                self.images.append(image.to(config.device))
+                    image = self.transform(image).to(config.device)
+            else:
+                image = os.path.join(self.directory, file)
 
-                if feature == 'gender':
-                    self.labels.append(genderToClassId[label['gender']])
-                elif feature == 'age':
-                    age = int(label['age'])
-                    self.labels.append(age)
-        else:
-            for i, file in enumerate(os.listdir(self.directory)):
-                label = parse('{}_{}_{age}_{gender}.jpg', file)
-                if label is None:
-                    continue
-                self.imagePath.append(os.path.join(self.directory, file))
-                if feature == 'gender':
-                    self.labels.append(genderToClassId[label['gender']])
-                elif feature == 'age':
-                    age = int(label['age'])
-                    self.labels.append(age)
-                    self.maxAge = age if age > self.maxAge else self.maxAge
-                    self.minAge = age if age < self.minAge else self.minAge
+            self.images.append(image)
+            gender = genderToClassId[fileLabels['gender']]
+            age = int(fileLabels['age'])
+            self.labels.append({
+                'age': age,
+                'gender': gender,
+                'age_gender': {
+                    'age': age,
+                    'gender': gender
+                }
+            })
         pass
 
     def __len__(self):
@@ -98,11 +90,12 @@ class AgeDBDataset(Dataset):
     def __getitem__(self, idx):
         if torch.is_tensor(idx):
             idx = idx.tolist()
-        if self.preload:
-            image = self.images[idx]
-            return image.to(config.device), self.labels[idx]
-        else:
-            image = Image.open(self.imagePath[idx])
+
+        image = self.images[idx]
+
+        if not self.preload:
+            image = Image.open(image)
             if self.transform is not None:
-                image = self.transform(image)
-            return image.to(config.device), self.labels[idx]
+                image = self.transform(image).to(config.device)
+
+        return image.to(config.device), self.labels[idx][self.feature]
