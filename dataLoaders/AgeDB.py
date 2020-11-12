@@ -15,7 +15,7 @@ class AgeDBHandler(DatasetHandler):
     def __init__(self):
         self.directory = os.path.join(config.absDatasetDir, 'AgeDB')
         self.zipFile = os.path.join(config.absDatasetDir, 'AgeDB.zip')
-        self.feature = None
+        self.features = None
         self.dataset = None
         self.trainDataset = None
         self.testDataset = None
@@ -23,11 +23,11 @@ class AgeDBHandler(DatasetHandler):
         self.usePreProcessed = None
         self.forcePreProcess = None
 
-    def createDataset(self, feature, transform, **kwargs):
-        self.feature = feature
+    def createDataset(self, features, transform, **kwargs):
+        self.features = features
         self.__prepareOnDisk()
         self.dataset = AgeDBDataset(directory=self.directory,
-                                    feature=feature,
+                                    features=features,
                                     transform=transform,
                                     **kwargs)
         return self.dataset
@@ -51,13 +51,13 @@ class AgeDBHandler(DatasetHandler):
 
 
 class AgeDBDataset(Dataset):
-    def __init__(self, directory, feature, transform, usePreProcessed, **kwargs):
+    def __init__(self, directory, features, transform, usePreProcessed, **kwargs):
         self.directory = directory if usePreProcessed == 0 else os.path.join(directory, 'preProcessed')
         self.transform = transform
         genderToClassId = {'m': 0, 'f': 1}
         self.labels = []
         self.images = []
-        self.feature = feature
+        self.features = features
         self.preload = kwargs.get('preload', 0)
 
         for i, file in enumerate(os.listdir(self.directory)):
@@ -76,11 +76,7 @@ class AgeDBDataset(Dataset):
             age = int(fileLabels['age'])
             self.labels.append({
                 'age': age,
-                'gender': gender,
-                'age_gender': {
-                    'age': age,
-                    'gender': gender
-                }
+                'gender': gender
             })
         pass
 
@@ -98,4 +94,5 @@ class AgeDBDataset(Dataset):
             if self.transform is not None:
                 image = self.transform(image).to(config.device)
 
-        return image.to(config.device), self.labels[idx][self.feature]
+        labels = {'age': self.labels[idx]['age'], 'gender': self.labels[idx]['gender']}
+        return image.to(config.device), labels

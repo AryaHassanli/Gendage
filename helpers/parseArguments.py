@@ -66,12 +66,12 @@ def parse(function):
                             help='select the task type: %(choices)s',
                             default=trainOptions['task']
                             )
-        parser.add_argument('--feature',
-                            metavar='feature',
+        parser.add_argument('--features',
+                            metavar='features',
                             type=str,
-                            choices=['age', 'gender', 'age_gender'],
-                            help='select the feature: %(choices)s',
-                            default=trainOptions['feature']
+                            choices=['age', 'gender'],
+                            help='select the features: %(choices)s',
+                            default=trainOptions['features']
                             )
 
         parser.add_argument('--splitSize',

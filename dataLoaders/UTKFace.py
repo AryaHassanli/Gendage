@@ -13,7 +13,7 @@ from dataLoaders.datasetHandler import DatasetHandler
 
 class UTKFaceHandler(DatasetHandler):
     def __init__(self):
-        self.feature = None
+        self.features = None
         self.directory = os.path.join(config.absDatasetDir, 'UTKFace')
         self.zipFile = os.path.join(config.absDatasetDir, 'UTKFace.tar.gz')
         self.dataset = None
@@ -21,10 +21,10 @@ class UTKFaceHandler(DatasetHandler):
         self.testDataset = None
         self.validateDataset = None
 
-    def createDataset(self, feature, transform, **kwargs):
-        self.feature = feature
+    def createDataset(self, features, transform, **kwargs):
+        self.features = features
         self.__prepareOnDisk()
-        self.dataset = UTKFaceDataset(directory=self.directory, feature=self.feature, transform=transform, **kwargs)
+        self.dataset = UTKFaceDataset(directory=self.directory, features=self.features, transform=transform, **kwargs)
         return self.dataset
 
     def __prepareOnDisk(self):
@@ -50,8 +50,8 @@ class UTKFaceHandler(DatasetHandler):
 
 
 class UTKFaceDataset(Dataset):
-    def __init__(self, directory, feature, transform, **kwargs):
-        self.feature = feature
+    def __init__(self, directory, features, transform, **kwargs):
+        self.features = features
         self.directory = directory
         self.transform = transform
         self.labels = []
@@ -72,10 +72,6 @@ class UTKFaceDataset(Dataset):
                 self.labels.append({
                     'age': int(fileLabels['age']),
                     'gender': int(fileLabels['gender']),
-                    'age_gender': {
-                        'age': int(fileLabels['age']),
-                        'gender': int(fileLabels['gender'])
-                    }
                 })
         pass
 
@@ -93,4 +89,5 @@ class UTKFaceDataset(Dataset):
             if self.transform is not None:
                 image = self.transform(image).to(config.device)
 
-        return image.to(config.device), self.labels[idx][self.feature]
+        labels = {'age': self.labels[idx]['age'], 'gender': self.labels[idx]['gender']}
+        return image.to(config.device), labels
