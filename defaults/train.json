@@ -1,17 +1,21 @@
 {
   "gradient":         false,
 
+  "datasetsDir":      "D:/MsThesis/datasets",
+  "outputDir":        "output",
+  "remoteDir":        "/home/admin/web/arya.li/public_html/gendage/output",
+
   "dataset":          "UTKFace",
   "usePreprocessed":  false,
-  "preload":          true,
+  "preload":          false,
 
-  "net":              "resnet18",
+  "net":              "resnet18Multi",
 
   "task":             "classification",
-  "feature":          "age",
+  "features":         ["age" , "gender"],
 
-  "splitSize":        [0.8, 0.1, 0.1],
+  "splitSize":        [0.7, 0.2, 0.1],
   "batchSize":        128,
-  "epochs":           30,
+  "epochs":           10,
   "lr":               0.001
 }
