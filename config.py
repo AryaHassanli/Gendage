@@ -1,41 +1,38 @@
+import datetime
 import os
+import posixpath
 
+import pytz
 import torch
 
 
 class Config:
     def __init__(self):
         self.baseDir = os.path.dirname(os.path.realpath(__file__))
-
-        self.datasetDir = "datasets"
-        self.absDatasetDir = self.datasetDir if os.path.isabs(self.datasetDir) else os.path.join(self.baseDir,
-                                                                                                 self.datasetDir)
-        self.outputDir = "output"
-        self.absOutputDir = self.outputDir if os.path.isabs(self.outputDir) else os.path.join(self.baseDir,
-                                                                                              self.outputDir)
-
+        self.datasetsDir = None
+        self.absDatasetsDir = None
+        self.outputDir = None
+        self.absOutputDir = None
+        self.remoteDir = None
         self.device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
         pass
 
-    def set(self,
-            baseDir=None,
-            datasetDir=None,
-            outputDir=None,
-            device=None
-            ):
-        self.baseDir = baseDir if baseDir is not None else self.baseDir
+    def setup(self, args, **kwargs):
+        for key in args.__dict__:
+            self.__setattr__(key, args.__getattribute__(key))
 
-        self.datasetDir = datasetDir if datasetDir is not None else self.datasetDir
-        self.absDatasetDir = self.datasetDir if os.path.isabs(self.datasetDir) else os.path.join(self.baseDir,
-                                                                                                 self.datasetDir)
-        if outputDir is not None:
-            if not os.path.exists(outputDir):
-                os.makedirs(outputDir)
-        self.outputDir = outputDir if outputDir is not None else self.outputDir
+        outputSubDir = datetime.datetime.now(pytz.utc).strftime("%Y-%m-%d_%H-%M-%S")
+
+        self.outputDir = os.path.join(self.outputDir, outputSubDir)
+        if not os.path.exists(self.outputDir):
+            os.makedirs(self.outputDir)
+        self.absDatasetsDir = self.datasetsDir if os.path.isabs(self.datasetsDir) else os.path.join(self.baseDir,
+                                                                                                    self.datasetsDir)
         self.absOutputDir = self.outputDir if os.path.isabs(self.outputDir) else os.path.join(self.baseDir,
                                                                                               self.outputDir)
-
-        self.device = device if device is not None else self.device
+        self.remoteDir = os.path.join(self.remoteDir, outputSubDir)
+        self.remoteDir = self.remoteDir.replace(os.sep, posixpath.sep)
+        pass
 
 
 config = Config()
