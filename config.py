@@ -15,6 +15,8 @@ class Config:
         self.absOutputDir = None
         self.remoteDir = None
         self.device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+        if self.device != 'cpu':
+            torch.backends.cudnn.benchmark = True
         pass
 
     def setup(self, args, **kwargs):
@@ -30,8 +32,7 @@ class Config:
                                                                                                     self.datasetsDir)
         self.absOutputDir = self.outputDir if os.path.isabs(self.outputDir) else os.path.join(self.baseDir,
                                                                                               self.outputDir)
-        self.remoteDir = os.path.join(self.remoteDir, outputSubDir)
-        self.remoteDir = self.remoteDir.replace(os.sep, posixpath.sep)
+        self.remoteDir = os.path.join(self.remoteDir, outputSubDir).replace(os.sep, posixpath.sep)
         pass
 
 
