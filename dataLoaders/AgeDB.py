@@ -13,8 +13,8 @@ from dataLoaders.datasetHandler import DatasetHandler
 
 class AgeDBHandler(DatasetHandler):
     def __init__(self):
-        self.directory = os.path.join(config.absDatasetDir, 'AgeDB')
-        self.zipFile = os.path.join(config.absDatasetDir, 'AgeDB.zip')
+        self.directory = os.path.join(config.absDatasetsDir, 'AgeDB')
+        self.zipFile = os.path.join(config.absDatasetsDir, 'AgeDB.zip')
         self.features = None
         self.dataset = None
         self.trainDataset = None
@@ -43,7 +43,7 @@ class AgeDBHandler(DatasetHandler):
         if os.path.exists(self.zipFile):
             print(self.zipFile, 'is found. Trying to extract:')
             with zipfile.ZipFile(self.zipFile) as zf:
-                zf.extractall(pwd=b'***REMOVED***', path=config.absDatasetDir)
+                zf.extractall(pwd=b'***REMOVED***', path=config.absDatasetsDir)
             print('Successfully extracted')
         else:
             sys.exit('AgeDB Zip file not found!')
