@@ -6,15 +6,10 @@ with open('defaults/train.json') as json_file:
 
 
 def parse(function):
-    parser = argparse.ArgumentParser(description='', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    parser = argparse.ArgumentParser(description='', fromfile_prefix_chars='@')
     if function == 'main':
-        parser.add_argument('-G', '--gradient',
-                            action='store_true',
-                            help='to run on gradient')
+        pass
     if function == 'preprocess':
-        parser.add_argument('-G', '--gradient',
-                            action='store_true',
-                            help='to run on gradient')
         parser.add_argument('--dataset',
                             metavar='dataset',
                             type=str,
@@ -23,17 +18,28 @@ def parse(function):
                             default='AgeDB'
                             )
     if function == 'run':
-        parser.add_argument('-G', '--gradient',
-                            action='store_true',
-                            help='to run on gradient')
-
         pass
     if function == 'train':
-        parser.add_argument('-G', '--gradient',
-                            action='store_true',
-                            help='to run on gradient',
-                            default=trainOptions['gradient']
+        parser.add_argument('--datasetsDir',
+                            metavar='datasetsDir',
+                            type=str,
+                            help='root directory of datasets',
+                            default=trainOptions['datasetsDir']
                             )
+        parser.add_argument('--outputDir',
+                            metavar='outputDir',
+                            type=str,
+                            help='directory of output',
+                            default=trainOptions['outputDir']
+                            )
+
+        parser.add_argument('--remoteDir',
+                            metavar='remoteDir',
+                            type=str,
+                            help='remote directory',
+                            default=trainOptions['remoteDir']
+                            )
+
         parser.add_argument('--dataset',
                             metavar='dataset',
                             type=str,
@@ -99,11 +105,7 @@ def parse(function):
                             help='learning rate',
                             default=trainOptions['lr']
                             )
-        parser.add_argument('--tag',
-                            metavar='tag',
-                            help='add a tag at the end of the file',
-                            default=''
-                            )
+
 
     args = parser.parse_args()
     return args

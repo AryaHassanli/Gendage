@@ -1,8 +1,6 @@
-import datetime
 import os
 
 import numpy as np
-import pytz
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -14,24 +12,11 @@ from helpers import getDatasetHandler
 from helpers import getNet
 from helpers import logger
 from helpers import parseArguments
+from helpers import remote
 
 # Handle arguments
 args = parseArguments.parse('train')
-outputSubDir = '_'.join(
-    [datetime.datetime.now(pytz.utc).strftime("%Y-%m-%d_%H-%M-%S"), args.net, args.task, args.dataset,
-     '+'.join(args.features),
-     args.tag])
-
-# Setting up the config according to the system that runs the code
-# On Gradient the directories would be different
-if args.gradient:
-    outputDir = os.path.join('/artifacts', outputSubDir)
-    config.set(datasetDir='/storage/datasets',
-               outputDir=outputDir)
-else:
-    outputDir = os.path.join('output', outputSubDir)
-    config.set(datasetDir="D:\\MsThesis\\datasets",
-               outputDir=outputDir)
+config.setup(args)
 
 # Setup Logging
 # The logs will shown on stdout and saved in $outputDir/output.log
@@ -42,7 +27,7 @@ kwargs = {
 }
 
 # Set the number of output classes to "one" if the task is regression
-if args.task == 'regression':
+if config.task == 'regression':
     # num_classes has been used in resnet family models and mobilenet_v2
     kwargs['num_classes'] = 1
     # n_class has been used in mobilenet_v3 model
@@ -53,7 +38,7 @@ else:
     kwargs['age_classes'] = 118
 
 # TODO: log the train parameters
-log.environment(args, kwargs)
+log.environment()
 
 
 def main():
@@ -65,39 +50,39 @@ def main():
     ])
     runtimeTrainTransform = transforms.Compose([
         transforms.RandomApply([
-            transforms.RandomRotation(30),
+            transforms.RandomRotation(30, fill=0),
         ], 0.7),
-        transforms.RandomPerspective(0.5, 0.5),
-        transforms.RandomHorizontalFlip(0.5)
+        transforms.RandomPerspective(0.5, 0.5, fill=0),
+        transforms.RandomHorizontalFlip(0.5),
     ])
     validTransform = preTransforms
 
-    log.transforms(preTransforms, runtimeTrainTransform, validTransform)
+    # log.transforms(preTransforms, runtimeTrainTransform, validTransform)
 
     # Creating an instance of desired datasetHandler
-    datasetHandler = getDatasetHandler.get(dataset=args.dataset)
+    datasetHandler = getDatasetHandler.get(dataset=config.dataset)
 
     # Creating the dataset object. It will take care of Downloading and unpacking the dataset if it's not available
     # If the dataset is preprocessed before, it can be used by setting the --usePreprocessed argument in command-line
     # preload option, will load the whole dataset to memory on init. use it with --preload
-    datasetHandler.createDataset(features=args.features,
+    datasetHandler.createDataset(features=config.features,
                                  transform=preTransforms,
-                                 preload=args.preload,
-                                 usePreprocessed=args.usePreprocessed,
+                                 preload=config.preload,
+                                 usePreprocessed=config.usePreprocessed,
                                  **kwargs
                                  )
 
     # Splitting the created dataset in train, validate, and test set.
-    trainLoader, validateLoader, testLoader = datasetHandler.getLoaders(trainSize=args.splitSize[0],
-                                                                        validateSize=args.splitSize[1],
-                                                                        testSize=args.splitSize[2],
-                                                                        batchSize=args.batchSize, **kwargs)
+    trainLoader, validateLoader, testLoader = datasetHandler.getLoaders(trainSize=config.splitSize[0],
+                                                                        validateSize=config.splitSize[1],
+                                                                        testSize=config.splitSize[2],
+                                                                        batchSize=config.batchSize, **kwargs)
 
-    model = getNet.get(args.net, **kwargs).to(config.device)
+    model = getNet.get(config.net, **kwargs).to(config.device)
 
-    numOfEpochs = args.epochs
+    numOfEpochs = config.epochs
     torch.backends.cudnn.benchmark = True
-    if args.task == 'classification':
+    if config.task == 'classification':
         # https://github.com/VHCC/PyTorch-age-estimation
         optimizer = optim.AdamW(model.parameters(), lr=0.001, weight_decay=0.001)
         ageCriterion = nn.CrossEntropyLoss().to(config.device)
@@ -106,11 +91,14 @@ def main():
         for epoch in range(1, numOfEpochs + 1):
             log.epochBegin(epoch, numOfEpochs)
 
-            train(model, args.features, trainLoader, criterions, optimizer, runtimeTrainTransform)
-            validate(model, args.features, validateLoader, criterions)
+            train(model, config.features, trainLoader, criterions, optimizer, runtimeTrainTransform)
+            validate(model, config.features, validateLoader, criterions)
 
-        test(model, args.features, testLoader, criterions)
+        test(model, config.features, testLoader, criterions)
         pass
+
+    remote.upload(os.path.join(config.outputDir, 'output.log'),
+                  os.path.join(config.remoteDir, 'output.log'))
 
 
 class AverageMeter(object):
