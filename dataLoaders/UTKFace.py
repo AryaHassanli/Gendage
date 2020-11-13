@@ -14,8 +14,8 @@ from dataLoaders.datasetHandler import DatasetHandler
 class UTKFaceHandler(DatasetHandler):
     def __init__(self):
         self.features = None
-        self.directory = os.path.join(config.absDatasetDir, 'UTKFace')
-        self.zipFile = os.path.join(config.absDatasetDir, 'UTKFace.tar.gz')
+        self.directory = os.path.join(config.absDatasetsDir, 'UTKFace')
+        self.zipFile = os.path.join(config.absDatasetsDir, 'UTKFace.tar.gz')
         self.dataset = None
         self.trainDataset = None
         self.testDataset = None
@@ -39,7 +39,7 @@ class UTKFaceHandler(DatasetHandler):
             print(self.zipFile, 'is found. Trying to extract:')
             try:
                 tar = tarfile.open(self.zipFile, "r:gz")
-                tar.extractall(path=config.absDatasetDir)
+                tar.extractall(path=config.absDatasetsDir)
                 tar.close()
                 print('Successfully extracted')
             except tarfile.TarError:
