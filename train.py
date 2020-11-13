@@ -1,5 +1,3 @@
-import os
-
 import numpy as np
 import torch
 import torch.nn as nn
@@ -12,7 +10,6 @@ from helpers import getDatasetHandler
 from helpers import getNet
 from helpers import logger
 from helpers import parseArguments
-from helpers import remote
 
 # Handle arguments
 args = parseArguments.parse('train')
@@ -22,22 +19,6 @@ config.setup(args)
 # The logs will shown on stdout and saved in $outputDir/output.log
 log = logger.Train()
 
-# Set the parameters for nets and datasets in kwargs to pass them to their handlers
-kwargs = {
-}
-
-# Set the number of output classes to "one" if the task is regression
-if config.task == 'regression':
-    # num_classes has been used in resnet family models and mobilenet_v2
-    kwargs['num_classes'] = 1
-    # n_class has been used in mobilenet_v3 model
-    kwargs['n_class'] = 1
-else:
-    kwargs['num_classes'] = 118
-    kwargs['n_class'] = 118
-    kwargs['age_classes'] = 118
-
-# TODO: log the train parameters
 log.environment()
 
 
@@ -55,7 +36,6 @@ def main():
         transforms.RandomPerspective(0.5, 0.5, fill=0),
         transforms.RandomHorizontalFlip(0.5),
     ])
-    validTransform = preTransforms
 
     # log.transforms(preTransforms, runtimeTrainTransform, validTransform)
 
@@ -68,28 +48,21 @@ def main():
     datasetHandler.createDataset(features=config.features,
                                  transform=preTransforms,
                                  preload=config.preload,
-                                 usePreprocessed=config.usePreprocessed,
-                                 **kwargs
-                                 )
+                                 usePreprocessed=config.usePreprocessed)
 
     # Splitting the created dataset in train, validate, and test set.
     trainLoader, validateLoader, testLoader = datasetHandler.getLoaders(trainSize=config.splitSize[0],
                                                                         validateSize=config.splitSize[1],
                                                                         testSize=config.splitSize[2],
-                                                                        batchSize=config.batchSize, **kwargs)
+                                                                        batchSize=config.batchSize)
 
-    model = getNet.get(config.net, **kwargs).to(config.device)
+    model = getNet.get(config.net).to(config.device)
 
-    numOfEpochs = config.epochs
-    torch.backends.cudnn.benchmark = True
     if config.task == 'classification':
-        # https://github.com/VHCC/PyTorch-age-estimation
-        optimizer = optim.AdamW(model.parameters(), lr=0.001, weight_decay=0.001)
-        ageCriterion = nn.CrossEntropyLoss().to(config.device)
-        genderCriterion = nn.CrossEntropyLoss().to(config.device)
-        criterions = {'age': ageCriterion, 'gender': genderCriterion}
-        for epoch in range(1, numOfEpochs + 1):
-            log.epochBegin(epoch, numOfEpochs)
+        optimizer = optim.AdamW(model.parameters(), lr=config.lr, weight_decay=0.001)
+        criterions = {feature: nn.CrossEntropyLoss().to(config.device) for feature in config.features}
+        for epoch in range(1, config.epochs + 1):
+            log.epochBegin(epoch, config.epochs)
 
             train(model, config.features, trainLoader, criterions, optimizer, runtimeTrainTransform)
             validate(model, config.features, validateLoader, criterions)
@@ -97,11 +70,9 @@ def main():
         test(model, config.features, testLoader, criterions)
         pass
 
-    remote.upload(os.path.join(config.outputDir, 'output.log'),
-                  os.path.join(config.remoteDir, 'output.log'))
-
 
 class AverageMeter(object):
+    # https://github.com/VHCC/PyTorch-age-estimation
     def __init__(self):
         self.val = 0
         self.avg = 0
