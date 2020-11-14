@@ -3,21 +3,50 @@ import json
 
 with open('defaults/train.json') as json_file:
     trainOptions = json.load(json_file)
+with open('defaults/run.json') as json_file:
+    runOptions = json.load(json_file)
+with open('defaults/preprocess.json') as json_file:
+    preprocessOptions = json.load(json_file)
 
 
 def parse(function):
-    parser = argparse.ArgumentParser(description='', fromfile_prefix_chars='@')
+    parser = argparse.ArgumentParser(description='', fromfile_prefix_chars='@',
+                                     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     if function == 'main':
         pass
     if function == 'preprocess':
+        parser.add_argument('--datasetsDir',
+                            metavar='datasetsDir',
+                            type=str,
+                            help='root directory of datasets',
+                            default=preprocessOptions['datasetsDir']
+                            )
+        parser.add_argument('--outputDir',
+                            metavar='outputDir',
+                            type=str,
+                            help='directory of output',
+                            default=preprocessOptions['outputDir']
+                            )
         parser.add_argument('--dataset',
                             metavar='dataset',
                             type=str,
                             choices=['UTKFace', 'AgeDB'],
                             help='select the dataset: %(choices)s',
-                            default='AgeDB'
+                            default=preprocessOptions['dataset']
                             )
     if function == 'run':
+        parser.add_argument('--datasetsDir',
+                            metavar='datasetsDir',
+                            type=str,
+                            help='root directory of datasets',
+                            default=runOptions['datasetsDir']
+                            )
+        parser.add_argument('--outputDir',
+                            metavar='outputDir',
+                            type=str,
+                            help='directory of output',
+                            default=runOptions['outputDir']
+                            )
         pass
     if function == 'train':
         parser.add_argument('--datasetsDir',
@@ -61,7 +90,7 @@ def parse(function):
         parser.add_argument('--net',
                             metavar='net',
                             type=str,
-                            choices=['resnet18', 'resnet50', 'mobilenet_v2', 'mobilenet_v3'],
+                            choices=['resnet18', 'resnet50', 'mobilenet_v2', 'mobilenet_v3', 'resnet18Multi'],
                             help='select the net: %(choices)s',
                             default=trainOptions['net']
                             )
@@ -105,7 +134,6 @@ def parse(function):
                             help='learning rate',
                             default=trainOptions['lr']
                             )
-
 
     args = parser.parse_args()
     return args
