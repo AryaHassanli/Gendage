@@ -1,0 +1,6 @@
+{
+  "datasetsDir":      "D:/MsThesis/datasets",
+  "outputDir":        "output",
+
+  "dataset":          "UTKFace"
+}

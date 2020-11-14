@@ -1,6 +1,4 @@
 {
-  "gradient":         false,
-
   "datasetsDir":      "D:/MsThesis/datasets",
   "outputDir":        "output",
   "remoteDir":        "/home/admin/web/arya.li/public_html/gendage/output",

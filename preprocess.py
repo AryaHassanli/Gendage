@@ -11,12 +11,7 @@ from helpers import parseArguments
 
 # Handle arguments
 args = parseArguments.parse('preprocess')
-if args.gradient:
-    config.set(datasetDir='/storage/datasets',
-               outputDir='/artifacts')
-else:
-    config.set(datasetDir="D:\\MsThesis\\datasets",
-               outputDir='output')
+config.setup(args)
 
 
 def preProcessAgeDB(mtcnn, img):
@@ -44,7 +39,7 @@ def preProcessAgeDB(mtcnn, img):
 
 
 if args.dataset == 'AgeDB':
-    directory = os.path.join(config.absDatasetDir, 'AgeDB')
+    directory = os.path.join(config.absDatasetsDir, 'AgeDB')
     if not os.path.exists(directory):
         # TODO: Look for Zip file or Download it!
         print('AgeDB is not available!')
