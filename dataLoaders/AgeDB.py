@@ -20,8 +20,7 @@ class AgeDBHandler(DatasetHandler):
         self.trainDataset = None
         self.testDataset = None
         self.validateDataset = None
-        self.usePreProcessed = None
-        self.forcePreProcess = None
+        self.usePreprocessed = None
 
     def createDataset(self, features, transform, **kwargs):
         self.features = features
@@ -51,8 +50,8 @@ class AgeDBHandler(DatasetHandler):
 
 
 class AgeDBDataset(Dataset):
-    def __init__(self, directory, features, transform, usePreProcessed, **kwargs):
-        self.directory = directory if usePreProcessed == 0 else os.path.join(directory, 'preProcessed')
+    def __init__(self, directory, features, transform, **kwargs):
+        self.directory = directory if kwargs.get('usePreprocessed', 0) == 0 else os.path.join(directory, 'preProcessed')
         self.transform = transform
         genderToClassId = {'m': 0, 'f': 1}
         self.labels = []
