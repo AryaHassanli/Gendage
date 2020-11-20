@@ -1,5 +1,5 @@
 from facenet_pytorch import MTCNN
-
+from PIL import Image
 from config import config
 
 
@@ -19,6 +19,15 @@ def detect(frame):
         faces.append({
             'box': (x1, y1, x2, y2),
             'labels': [],
-            'image': frame[y1:y2, x1:x2]
+            'image': Image.fromarray(frame[y1:y2, x1:x2])
         })
     return faces
+
+
+def align(faceImage):
+    x, y = faceImage.size
+    size = max(x, y)
+    faceSq = Image.new('RGB', (size, size), (0, 0, 0))
+    faceSq.paste(faceImage, (int((size - x) / 2), int((size - y) / 2)))
+
+    return faceSq
