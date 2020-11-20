@@ -1,16 +1,66 @@
 import os
 import sys
-import time
 
 import cv2
-from facenet_pytorch import MTCNN
+import torch
 
 from config import config
-from helpers import faceDetector
-from PIL import Image
+from helpers import eval
+from helpers import faceProcess
+from helpers import getNet
+from helpers import logger
+from helpers import parseArguments
+
+args = parseArguments.parse('demo')
+config.setup(args)
+
+log = logger.Demo()
+log.environment()
 
 
-def process(online, labelGenerators, inputFile, outputFile, detectionFPS, device):
+def main():
+    process(online=0,
+            labelGenerators=[gendage],
+            inputFile='D:/MsThesis/inputSamples/Harry.mp4',
+            outputFile='output/result.avi',
+            detectionFPS=5,
+            features=['age', 'gender'])
+
+
+model = getNet.get('resnet18Multi').to(config.device)
+model.load_state_dict(
+    torch.load('D:/Gendage/output/modelDouble.pt')
+)
+
+class MovingAverage:
+    def __init__(self, window):
+        self.list = []
+        self.window = window
+
+    def addItem(self, item):
+        self.list.append(item)
+        if len(self.list) > self.window:
+            self.list.pop(0)
+        return sum(self.list) / len(self.list)
+
+
+movingAvgs = {}
+
+
+def gendage(face, features=None):
+    if len(movingAvgs) == 0:
+        for feature in features:
+            movingAvgs[feature] = MovingAverage(7)
+    out = eval.faceImage(face, model, features=features)
+    outputList = []
+    for feature in features:
+        outputList.append(str(round(
+            movingAvgs[feature].addItem(out[feature]),
+            2)))
+    return outputList
+
+
+def process(online, labelGenerators, inputFile, outputFile, detectionFPS, **kwargs):
     """
     This 'demo' captures the inputFile and detects faces on it. Then, passes each cropped face to labelGenerator
     functions and retrieves list of labels to put over that face on the original frame. The output video file will be
@@ -59,27 +109,27 @@ def process(online, labelGenerators, inputFile, outputFile, detectionFPS, device
 
     faces = []
     frameNo = 0
-    __log = __Log(inputVideoProps['frameCount'])
+    log.programBegin(inputVideoProps['frameCount'])
     ret, frame = inputVideo.read()
     while inputVideo.isOpened() and ret:
-        __log.frameBegin()
+        log.frameBegin()
         frameNo += 1
         frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         if frameNo % detectionFPInput == 0:
-            __log.detectBegin()
+            log.detectBegin()
             faces.clear()
 
-            faces = faceDetector.detect(frame)
+            faces = faceProcess.detect(frame)
             if faces:
                 for i, face in enumerate(faces):
-                    faces[i]['image'] = __processFace(face['image'], device)
+                    faces[i]['image'] = faceProcess.align(face['image'])
                 faces = [face for face in faces if face['image'] is not None]
 
                 for labelGenerator in labelGenerators:
                     for face in faces:
-                        face['labels'] += labelGenerator(Image.fromarray(face['image']))
+                        face['labels'] += labelGenerator(face['image'], **kwargs)
 
-                __log.detectEnd(len(faces))
+                log.detectEnd(len(faces))
 
         frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
         if faces:
@@ -93,17 +143,13 @@ def process(online, labelGenerators, inputFile, outputFile, detectionFPS, device
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
         ret, frame = inputVideo.read()
-        __log.frameEnd(frameNo)
+        log.frameEnd(frameNo)
 
     outputVideo.release()
     inputVideo.release()
     cv2.destroyAllWindows()
-    __log.programEnd()
+    log.programEnd()
     return
-
-
-def __processFace(faceImage, device):
-    return faceImage
 
 
 def __putLabels(frame, face):
@@ -113,57 +159,5 @@ def __putLabels(frame, face):
     cv2.putText(frame, ' '.join(labels), (x1, y1 - 10), cv2.FONT_HERSHEY_COMPLEX, 0.7, (0, 255, 0), 2)
 
 
-class __Log:
-    def __init__(self, frameCount):
-        self.__frameCount = frameCount
-
-        self.__frameStart = 0
-        self.__frameTime = 0
-        self.__totalFrameTime = 0
-
-        self.__detectStart = 0
-        self.__detectTime = 0
-        self.__totalDetectTime = 0
-        self.__totalDetections = 0
-
-    def frameBegin(self):
-        self.__frameStart = time.time()
-        pass
-
-    def frameEnd(self, frameNo):
-        self.__frameTime = time.time() - self.__frameStart
-        self.__totalFrameTime += self.__frameTime
-        print('Frame {}/{} Processed in {}ms\t'.format(
-            frameNo,
-            self.__frameCount,
-            round(1000 * self.__frameTime, 1)
-        ), end='\n')
-        pass
-
-    def detectBegin(self):
-        self.__detectStart = time.time()
-        pass
-
-    def detectEnd(self, numOfFaces):
-        self.__detectTime = time.time() - self.__detectStart
-        self.__totalDetectTime += self.__detectTime
-        self.__totalDetections += numOfFaces
-        pass
-
-    def programBegin(self):
-        pass
-
-    def programEnd(self):
-        print("\n")
-        print("Total Frames:", self.__frameCount)
-        print("Total Frame Process Time: {}ms, Average: {}ms".format(
-            round(1000 * self.__totalFrameTime, 1),
-            round(1000 * self.__totalFrameTime / self.__frameCount, 1)
-        ))
-        print()
-        print("Total Faces detected:", self.__totalDetections)
-        print("Total Detection Time: {}ms, Average: {}ms".format(
-            round(1000 * self.__totalDetectTime, 1),
-            round(1000 * self.__totalDetectTime / self.__totalDetections, 1)
-        ))
-        pass
+if __name__ == '__main__':
+    main()
