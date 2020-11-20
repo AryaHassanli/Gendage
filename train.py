@@ -1,3 +1,5 @@
+import os
+
 import numpy as np
 import torch
 import torch.nn as nn
@@ -23,6 +25,8 @@ log.environment()
 
 
 def main():
+    model = getNet.get(config.net).to(config.device)
+
     preTransforms = transforms.Compose([
         transforms.Resize((100, 100)),
         transforms.Pad(10),
@@ -56,8 +60,6 @@ def main():
                                                                         testSize=config.splitSize[2],
                                                                         batchSize=config.batchSize)
 
-    model = getNet.get(config.net).to(config.device)
-
     if config.task == 'classification':
         optimizer = optim.AdamW(model.parameters(), lr=config.lr, weight_decay=0.001)
         criterions = {feature: nn.CrossEntropyLoss().to(config.device) for feature in config.features}
@@ -68,7 +70,6 @@ def main():
             validate(model, config.features, validateLoader, criterions)
 
         test(model, config.features, testLoader, criterions)
-        pass
 
 
 class AverageMeter(object):
@@ -191,7 +192,7 @@ def validate(model, features, validateLoader, criterions):
 
     isLearned = {feature: validateMAE[feature] < minValidateMAE[feature] for feature in features}
     # TODO
-    isLearned = sum(isLearned.values())
+    isLearned = validateMAE['age'] < minValidateMAE['age']
     if isLearned:
         minValidateMAE = {feature: validateMAE[feature] for feature in features}
         torch.save(model.state_dict(),
