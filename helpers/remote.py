@@ -4,9 +4,10 @@ import paramiko
 
 from config import config
 
+
 class Remote:
     def __init__(self):
-        with open('.ps_project/ssh.creds') as json_file:
+        with open(config.sshCredsFile) as json_file:
             sshCreds = json.load(json_file)
 
         host = sshCreds['host']
