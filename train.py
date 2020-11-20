@@ -35,10 +35,10 @@ def main():
     ])
     runtimeTrainTransform = transforms.Compose([
         transforms.RandomApply([
-            transforms.RandomRotation(30, fill=0),
-        ], 0.7),
-        transforms.RandomPerspective(0.5, 0.5, fill=0),
-        transforms.RandomHorizontalFlip(0.5),
+            transforms.RandomRotation(30, fill=0)
+        ], 0.8),
+        transforms.RandomPerspective(0.5, 0.8, fill=0),
+        transforms.RandomHorizontalFlip(0.8),
     ])
 
     # log.transforms(preTransforms, runtimeTrainTransform, validTransform)
@@ -190,7 +190,6 @@ def validate(model, features, validateLoader, criterions):
     validateAcc = {feature: accMonitor[feature].avg for feature in features}
     validateMAE = {feature: mae[feature] for feature in features}
 
-    isLearned = {feature: validateMAE[feature] < minValidateMAE[feature] for feature in features}
     # TODO
     isLearned = validateMAE['age'] < minValidateMAE['age']
     if isLearned:
