@@ -1,39 +1,54 @@
 import logging
 import os
+import posixpath
 import sys
+import time
 
 from config import config
+from helpers import remote
 
 
 class Train:
     def __init__(self):
         self.log = logging.getLogger()
         self.log.setLevel(logging.INFO)
-        self.log.addHandler(logging.FileHandler(os.path.join(config.outputDir, 'output.log')))
+        self.logFile = os.path.join(config.outputDir, 'output.log')
+        self.remoteLogFile = os.path.join(config.remoteDir, 'output.log').replace(os.sep, posixpath.sep)
+        self.log.addHandler(logging.FileHandler(self.logFile))
         self.log.addHandler(logging.StreamHandler(sys.stdout))
+        self.dictionary = {}
 
-    def environment(self, args, kwargs):
-        self.log.info(str(args).replace(',', ',\n'))
-        self.log.info(str(kwargs).replace(',', ',\n'))
+        logging.getLogger("paramiko").setLevel(logging.WARNING)
+        self.remoteHandler = remote.Remote()
+
+    def uploadLog(self):
+        self.remoteHandler.upload(self.logFile, self.remoteLogFile)
+        pass
+
+    def addToDict(self, dictionary):
+        for key, value in dictionary.items():
+            self.dictionary[key] = value
+
+    def environment(self):
         self.log.info(str(config.__dict__).replace(',', ',\n'))
         pass
 
     def transforms(self, preTransforms, runtimeTrainTransform, validTransform):
         self.log.info('preTransforms:')
         for transform in preTransforms.transforms:
-            self.log.info('\t'+str(transform))
+            self.log.info('\t' + str(transform))
         self.log.info('runtimeTrainTransform:')
         for transform in runtimeTrainTransform.transforms:
-            self.log.info('\t'+str(transform))
+            self.log.info('\t' + str(transform))
         self.log.info('validTransform:')
         for transform in validTransform.transforms:
-            self.log.info('\t'+str(transform))
+            self.log.info('\t' + str(transform))
         pass
 
     def epochBegin(self, epoch, numOfEpochs):
         self.log.info("Epoch: {}/{}".format(epoch, numOfEpochs))
 
-    def train(self,features, trainLoss, trainAcc):
+    def train(self, features, trainLoss, trainAcc):
         self.log.info('\n\tTrain:')
         for feature in features:
             self.log.info('\t\t{} -> Loss: {}, Accuracy: {}%'.format(
@@ -63,7 +78,7 @@ class Train:
             self.log.info('\tNetwork Improved. saving the model.')
         pass
 
-    def test(self,features, testLoss, testAcc, testMAE):
+    def test(self, features, testLoss, testAcc, testMAE):
         self.log.info('Test:')
         for feature in features:
             self.log.info('\t{} -> Loss: {}, Accuracy: {}%, MAE: {}'.format(
@@ -73,77 +88,66 @@ class Train:
                 round(testMAE[feature], 2)))
 
 
-class TrainMulti:
+class Demo:
     def __init__(self):
         self.log = logging.getLogger()
         self.log.setLevel(logging.INFO)
-        self.log.addHandler(logging.FileHandler(os.path.join(config.outputDir, 'output.log')))
+        self.logFile = os.path.join(config.outputDir, 'output.log')
+        self.log.addHandler(logging.FileHandler(self.logFile))
         self.log.addHandler(logging.StreamHandler(sys.stdout))
 
-    def environment(self, args, kwargs):
-        self.log.info(str(args).replace(',', ',\n'))
-        self.log.info(str(kwargs).replace(',', ',\n'))
+        self.__frameCount = 0
+        self.__frameStart = 0
+        self.__frameTime = 0
+        self.__totalFrameTime = 0
+
+        self.__detectStart = 0
+        self.__detectTime = 0
+        self.__totalDetectTime = 0
+        self.__totalDetections = 0
+
+    def environment(self):
         self.log.info(str(config.__dict__).replace(',', ',\n'))
         pass
 
-    def transforms(self, preTransforms, runtimeTrainTransform, validTransform):
-        self.log.info('preTransforms:')
-        for transform in preTransforms.transforms:
-            self.log.info('\t'+str(transform))
-        self.log.info('runtimeTrainTransform:')
-        for transform in runtimeTrainTransform.transforms:
-            self.log.info('\t'+str(transform))
-        self.log.info('validTransform:')
-        for transform in validTransform.transforms:
-            self.log.info('\t'+str(transform))
+    def frameBegin(self):
+        self.__frameStart = time.time()
         pass
 
-    def epochBegin(self, epoch, numOfEpochs):
-        self.log.info("Epoch: {}/{}".format(epoch, numOfEpochs))
-
-    def train(self, ageTrainLoss, ageTrainAcc , genderTrainLoss, genderTrainAcc):
-        self.log.info('\n\tTrain:')
-        self.log.info('\t\tAge -> Loss: {}, Accuracy: {}%'.format(
-            round(ageTrainLoss, 4),
-            round(100 * ageTrainAcc, 2)))
-        self.log.info('\t\tGender -> Loss: {}, Accuracy: {}%'.format(
-            round(genderTrainLoss, 4),
-            round(100 * genderTrainAcc, 2)))
-        pass
-
-    def batch(self, batch, numOfBatches, ageBatchLoss, ageBatchAcc, genderBatchLoss, genderBatchAcc):
-        self.log.info('\tBatch: {}/{}, Age -> loss: {}, accuracy: {}%'.format(
-            batch, numOfBatches,
-            round(ageBatchLoss, 4),
-            round(100 * ageBatchLoss, 2)
+    def frameEnd(self, frameNo):
+        self.__frameTime = time.time() - self.__frameStart
+        self.__totalFrameTime += self.__frameTime
+        self.log.info('Frame {}/{} Processed in {}ms\t'.format(
+            frameNo,
+            self.__frameCount,
+            round(1000 * self.__frameTime, 1)
         ))
-        self.log.info('\tBatch: {}/{}, Gender -> loss: {}, accuracy: {}%'.format(
-            batch, numOfBatches,
-            round(genderBatchLoss, 4),
-            round(100 * genderBatchLoss, 2)
-        ))
-
-    def validate(self, ageValidateLoss, ageValidateAcc, ageValidateMAE , genderValidateLoss, genderValidateAcc, genderValidateMAE, isLearned):
-        self.log.info('\tValidation:')
-        self.log.info('\t\tAge -> Loss: {}, Accuracy: {}%, MAE: {}'.format(
-            round(ageValidateLoss, 4),
-            round(100 * ageValidateAcc, 2),
-            round(ageValidateMAE, 2)))
-        self.log.info('\t\tGender -> Loss: {}, Accuracy: {}%, MAE: {}'.format(
-            round(genderValidateLoss, 4),
-            round(100 * genderValidateAcc, 2),
-            round(genderValidateMAE, 2)))
-        if isLearned:
-            self.log.info('\tNetwork Improved. saving the model.')
         pass
 
-    def test(self, ageTestLoss, ageTestAcc, ageTestMAE, genderTestLoss, genderTestAcc, genderTestMAE):
-        self.log.info('Test:')
-        self.log.info('\tAge -> Loss: {}, Accuracy: {}%, MAE: {}'.format(
-            round(ageTestLoss, 4),
-            round(100 * ageTestAcc, 2),
-            round(ageTestMAE, 2)))
-        self.log.info('\tGender -> Loss: {}, Accuracy: {}%, MAE: {}'.format(
-            round(genderTestLoss, 4),
-            round(100 * genderTestAcc, 2),
-            round(genderTestMAE, 2)))
+    def detectBegin(self):
+        self.__detectStart = time.time()
+        pass
+
+    def detectEnd(self, numOfFaces):
+        self.__detectTime = time.time() - self.__detectStart
+        self.__totalDetectTime += self.__detectTime
+        self.__totalDetections += numOfFaces
+        pass
+
+    def programBegin(self, frameCount):
+        self.__frameCount = int(frameCount)
+
+    def programEnd(self):
+        self.log.info("\n")
+        self.log.info("Total Frames: {}".format(self.__frameCount))
+        self.log.info("Total Frame Process Time: {}ms, Average: {}ms".format(
+            round(1000 * self.__totalFrameTime, 1),
+            round(1000 * self.__totalFrameTime / self.__frameCount, 1)
+        ))
+        self.log.info('\n')
+        self.log.info("Total Faces detected: {}".format(self.__totalDetections))
+        self.log.info("Total Detection Time: {}ms, Average: {}ms".format(
+            round(1000 * self.__totalDetectTime, 1),
+            round(1000 * self.__totalDetectTime / self.__totalDetections, 1)
+        ))
+        pass

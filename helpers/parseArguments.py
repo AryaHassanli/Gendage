@@ -3,8 +3,8 @@ import json
 
 with open('defaults/train.json') as json_file:
     trainOptions = json.load(json_file)
-with open('defaults/run.json') as json_file:
-    runOptions = json.load(json_file)
+with open('defaults/demo.json') as json_file:
+    demoOptions = json.load(json_file)
 with open('defaults/preprocess.json') as json_file:
     preprocessOptions = json.load(json_file)
 
@@ -34,18 +34,18 @@ def parse(function):
                             help='select the dataset: %(choices)s',
                             default=preprocessOptions['dataset']
                             )
-    if function == 'run':
+    if function == 'demo':
         parser.add_argument('--datasetsDir',
                             metavar='datasetsDir',
                             type=str,
                             help='root directory of datasets',
-                            default=runOptions['datasetsDir']
+                            default=demoOptions['datasetsDir']
                             )
         parser.add_argument('--outputDir',
                             metavar='outputDir',
                             type=str,
                             help='directory of output',
-                            default=runOptions['outputDir']
+                            default=demoOptions['outputDir']
                             )
         pass
     if function == 'train':
