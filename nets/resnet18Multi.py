@@ -170,8 +170,8 @@ class ResNet(nn.Module):
         self.avgpool = nn.AdaptiveAvgPool2d((1, 1))
 
         # TODO
-        self.ageFc = nn.Linear(512 * block.expansion, num_classes)
-        self.genderFc = nn.Linear(512 * block.expansion, num_classes)
+        self.ageFc = nn.Linear(512 * block.expansion, 120)
+        self.genderFc = nn.Linear(512 * block.expansion, 2)
 
         for m in self.modules():
             if isinstance(m, nn.Conv2d):
