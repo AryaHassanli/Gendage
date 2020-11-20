@@ -14,6 +14,7 @@ class Config:
         self.outputDir = None
         self.absOutputDir = None
         self.remoteDir = None
+        self.sshCredsFile = '.ps_project/ssh.creds'
         self.device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
         if self.device != 'cpu':
             torch.backends.cudnn.benchmark = True
@@ -32,7 +33,8 @@ class Config:
                                                                                                     self.datasetsDir)
         self.absOutputDir = self.outputDir if os.path.isabs(self.outputDir) else os.path.join(self.baseDir,
                                                                                               self.outputDir)
-        self.remoteDir = os.path.join(self.remoteDir, outputSubDir).replace(os.sep, posixpath.sep)
+        self.remoteDir = os.path.join(self.remoteDir, outputSubDir).replace(os.sep,
+                                                                            posixpath.sep) if 'remoteDir' in args.__dict__ else None
         pass
 
 
