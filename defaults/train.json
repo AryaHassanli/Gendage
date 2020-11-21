@@ -5,7 +5,7 @@
 
   "dataset":          "UTKFace",
   "usePreprocessed":  false,
-  "preload":          false,
+  "preload":          true,
 
   "net":              "resnet18Multi",
 
@@ -14,6 +14,6 @@
 
   "splitSize":        [0.7, 0.2, 0.1],
   "batchSize":        128,
-  "epochs":           10,
+  "epochs":           40,
   "lr":               0.001
 }
