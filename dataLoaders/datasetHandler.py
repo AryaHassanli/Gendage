@@ -17,6 +17,8 @@ class DatasetHandler:
         self.trainDataset, self.validateDataset, self.testDataset = random_split(
             self.dataset, [trainLen, validateLen, testLen])
 
+        self.dataset = None
+
         trainLoader = DataLoader(self.trainDataset, batch_size=batchSize)
         validateLoader = DataLoader(self.validateDataset, batch_size=batchSize)
         testLoader = DataLoader(self.testDataset, batch_size=batchSize)
