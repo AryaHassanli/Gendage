@@ -84,7 +84,7 @@ class AgeDBDataset(torch.utils.data.Dataset):
         image = self.images[idx]
 
         if not self.preload:
-            image = Image.open(image)
+            image = Image.open(image).convert('RGB')
             if self.transform is not None:
                 image = self.transform(image).to(config.device)
 
