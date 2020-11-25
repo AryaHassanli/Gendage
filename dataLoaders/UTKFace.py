@@ -5,7 +5,7 @@ import tarfile
 import torch
 from PIL import Image
 from parse import parse
-from torch.utils.data import Dataset
+import torch.utils.data
 
 from config import config
 from dataLoaders.datasetHandler import DatasetHandler
@@ -13,7 +13,6 @@ from dataLoaders.datasetHandler import DatasetHandler
 
 class UTKFaceHandler(DatasetHandler):
     def __init__(self):
-        self.features = None
         self.directory = os.path.join(config.absDatasetsDir, 'UTKFace')
         self.zipFile = os.path.join(config.absDatasetsDir, 'UTKFace.tar.gz')
         self.dataset = None
@@ -21,10 +20,9 @@ class UTKFaceHandler(DatasetHandler):
         self.testDataset = None
         self.validateDataset = None
 
-    def createDataset(self, features, transform, **kwargs):
-        self.features = features
+    def createDataset(self, transform, **kwargs):
         self.__prepareOnDisk()
-        self.dataset = UTKFaceDataset(directory=self.directory, features=self.features, transform=transform, **kwargs)
+        self.dataset = UTKFaceDataset(directory=self.directory, transform=transform, **kwargs)
         return self.dataset
 
     def __prepareOnDisk(self):
@@ -49,16 +47,15 @@ class UTKFaceHandler(DatasetHandler):
         pass
 
 
-class UTKFaceDataset(Dataset):
-    def __init__(self, directory, features, transform, **kwargs):
-        self.features = features
+class UTKFaceDataset(torch.utils.data.Dataset):
+    def __init__(self, directory, transform, **kwargs):
         self.directory = directory
         self.transform = transform
         self.labels = []
         self.images = []
         self.preload = kwargs.get('preload', 0)
 
-        for file in os.listdir(directory):
+        for i, file in enumerate(os.listdir(self.directory)):
             fileLabels = parse('{age}_{gender}_{}_{}.jpg.chip.jpg', file)
             if fileLabels is not None:
                 if self.preload:
