@@ -5,7 +5,7 @@ import zipfile
 import torch
 from PIL import Image
 from parse import parse
-from torch.utils.data import Dataset
+import torch.utils.data
 
 from config import config
 from dataLoaders.datasetHandler import DatasetHandler
@@ -15,18 +15,14 @@ class AgeDBHandler(DatasetHandler):
     def __init__(self):
         self.directory = os.path.join(config.absDatasetsDir, 'AgeDB')
         self.zipFile = os.path.join(config.absDatasetsDir, 'AgeDB.zip')
-        self.features = None
         self.dataset = None
         self.trainDataset = None
         self.testDataset = None
         self.validateDataset = None
-        self.usePreprocessed = None
 
-    def createDataset(self, features, transform, **kwargs):
-        self.features = features
+    def createDataset(self, transform, **kwargs):
         self.__prepareOnDisk()
         self.dataset = AgeDBDataset(directory=self.directory,
-                                    features=features,
                                     transform=transform,
                                     **kwargs)
         return self.dataset
@@ -49,14 +45,13 @@ class AgeDBHandler(DatasetHandler):
             # TODO: In case of zip file is missing, simply download it!
 
 
-class AgeDBDataset(Dataset):
-    def __init__(self, directory, features, transform, **kwargs):
+class AgeDBDataset(torch.utils.data.Dataset):
+    def __init__(self, directory, transform, **kwargs):
         self.directory = directory if kwargs.get('usePreprocessed', 0) == 0 else os.path.join(directory, 'preProcessed')
         self.transform = transform
         genderToClassId = {'m': 0, 'f': 1}
         self.labels = []
         self.images = []
-        self.features = features
         self.preload = kwargs.get('preload', 0)
 
         for i, file in enumerate(os.listdir(self.directory)):
@@ -64,7 +59,7 @@ class AgeDBDataset(Dataset):
             if fileLabels is None:
                 continue
             if self.preload:
-                image = Image.open(os.path.join(self.directory, file))
+                image = Image.open(os.path.join(self.directory, file)).convert('RGB')
                 if self.transform is not None:
                     image = self.transform(image).to(config.device)
             else:
