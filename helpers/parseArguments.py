@@ -1,38 +1,24 @@
 import argparse
-import json
-
-with open('defaults/train.json') as json_file:
-    trainOptions = json.load(json_file)
-with open('defaults/demo.json') as json_file:
-    demoOptions = json.load(json_file)
-with open('defaults/preprocess.json') as json_file:
-    preprocessOptions = json.load(json_file)
 
 
 def parse(function):
-    parser = argparse.ArgumentParser(description='', fromfile_prefix_chars='@',
-                                     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    if function == 'main':
-        pass
+    parser = argparse.ArgumentParser(description='', fromfile_prefix_chars='@')
     if function == 'preprocess':
         parser.add_argument('--datasetsDir',
                             metavar='datasetsDir',
                             type=str,
-                            help='root directory of datasets',
-                            default=preprocessOptions['datasetsDir']
+                            help='root directory of datasets'
                             )
         parser.add_argument('--outputDir',
                             metavar='outputDir',
                             type=str,
-                            help='directory of output',
-                            default=preprocessOptions['outputDir']
+                            help='directory of output'
                             )
         parser.add_argument('--dataset',
                             metavar='dataset',
                             type=str,
                             choices=['UTKFace', 'AgeDB'],
-                            help='select the dataset: %(choices)s',
-                            default=preprocessOptions['dataset']
+                            help='select the dataset: %(choices)s'
                             )
     if function == 'demo':
         parser.add_argument('--datasetsDir',
@@ -52,87 +38,66 @@ def parse(function):
         parser.add_argument('--datasetsDir',
                             metavar='datasetsDir',
                             type=str,
-                            help='root directory of datasets',
-                            default=trainOptions['datasetsDir']
+                            help='root directory of the datasets. e.g. /home/datasets/ or datasets'
                             )
         parser.add_argument('--outputDir',
                             metavar='outputDir',
                             type=str,
-                            help='directory of output',
-                            default=trainOptions['outputDir']
-                            )
-
-        parser.add_argument('--remoteDir',
-                            metavar='remoteDir',
-                            type=str,
-                            help='remote directory',
-                            default=trainOptions['remoteDir']
-                            )
-
-        parser.add_argument('--dataset',
-                            metavar='dataset',
-                            type=str,
-                            choices=['UTKFace', 'AgeDB'],
-                            help='select the dataset: %(choices)s',
-                            default=trainOptions['dataset']
-                            )
-        parser.add_argument('--preload',
-                            action='store_true',
-                            help='preload the dataset to memory',
-                            default=trainOptions['preload']
-                            )
-        parser.add_argument('--usePreprocessed',
-                            action='store_true',
-                            help='use the preprocessed variation of the dataset. You have to first run preprocess.py '
-                                 'on it',
-                            default=trainOptions['usePreprocessed']
-                            )
-        parser.add_argument('--net',
-                            metavar='net',
-                            type=str,
-                            choices=['resnet18', 'resnet50', 'mobilenet_v2', 'mobilenet_v3', 'resnet18Multi'],
-                            help='select the net: %(choices)s',
-                            default=trainOptions['net']
-                            )
-        parser.add_argument('--task',
-                            metavar='task',
-                            type=str,
-                            choices=['classification', 'regression'],
-                            help='select the task type: %(choices)s',
-                            default=trainOptions['task']
+                            help='directory to save the outputs. e.g. /artifacts/output/ or output'
                             )
         parser.add_argument('--features',
                             metavar='features',
                             type=str,
                             choices=['age', 'gender'],
-                            help='select the features: %(choices)s',
-                            default=trainOptions['features']
+                            help='Select the features to learn: %(choices)s e.g. age gender'
+                            )
+        parser.add_argument('--datasets',
+                            metavar='datasets',
+                            type=str,
+                            nargs='+',
+                            choices=['UTKFace', 'AgeDB'],
+                            help='Select on dataset for each task: %(choices)s e.g. UTKFace AgeDB'
+                            )
+        parser.add_argument('--nets',
+                            metavar='nets',
+                            type=str,
+                            nargs='+',
+                            choices=['simClass'],
+                            help='Select the network for each learning task. %(choices)s '
+                                 'e.g. simClass simClass'
+                            )
+        parser.add_argument('--numOfClasses',
+                            metavar='numOfClasses',
+                            type=int,
+                            nargs='+',
+                            help='Number of classes for each task. e.g. 120 2 (age,gender)'
+                            )
+
+        parser.add_argument('--preload',
+                            action='store_true',
+                            help='Set True to load the whole dataset to memory at beginning'
                             )
 
         parser.add_argument('--splitSize',
                             metavar='splitSize',
                             nargs=3,
                             type=float,
-                            help='specify the train, validation and test size',
-                            default=trainOptions['splitSize']
+                            help='Specify the train, validation and test size. e.g. 0.7 0.2 0.1'
                             )
         parser.add_argument('--batchSize',
                             metavar='batchSize',
                             type=int,
-                            help='set the batch size',
-                            default=trainOptions['batchSize']
+                            help='Set the batch size. e.g. 128'
                             )
         parser.add_argument('--epochs',
                             metavar='num of epochs',
                             type=int,
-                            help='set the number of epochs',
-                            default=trainOptions['epochs']
+                            help='Set the number of epochs. e.g. 40'
                             )
         parser.add_argument('--lr',
                             metavar='lr',
                             type=float,
-                            help='learning rate',
-                            default=trainOptions['lr']
+                            help='Set the Learning Rate. e.g. 0.001'
                             )
 
     args = parser.parse_args()
