@@ -6,16 +6,19 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 import torchvision.transforms as transforms
+from facenet_pytorch import InceptionResnetV1
 
 from config import config
+from defaults import trainConfig
 from helpers import getDatasetHandler
 from helpers import getNet
 from helpers import logger
 from helpers import parseArguments
 
 # Handle arguments
-args = parseArguments.parse('train')
-config.setup(args)
+cliArgs = parseArguments.parse('train')
+fileArgs = trainConfig.options
+config.setup(cliArgs, fileArgs)
 
 # Setup Logging
 # The logs will shown on stdout and saved in $outputDir/output.log
@@ -23,53 +26,50 @@ log = logger.Train()
 
 log.environment()
 
+minValidateMAE = np.inf
+resnet = InceptionResnetV1(pretrained='vggface2').eval().to(config.device)
+
 
 def main():
-    model = getNet.get(config.net).to(config.device)
-
+    global minValidateMAE
     preTransforms = transforms.Compose([
         transforms.Resize((100, 100)),
         transforms.Pad(10),
         transforms.ToTensor(),
         transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
     ])
-    runtimeTrainTransform = transforms.Compose([
-        transforms.RandomApply([
-            transforms.RandomRotation(30, fill=0)
-        ], 0.8),
-        transforms.RandomPerspective(0.5, 0.8, fill=0),
-        transforms.RandomHorizontalFlip(0.8),
-    ])
+    models = {}
+    for i, feature in enumerate(config.features):
+        if feature not in models:
+            models[feature] = getNet.get(config.nets[i], numOfClasses=config.numOfClasses[i]).to(config.device)
+        model = models[feature]
 
-    # log.transforms(preTransforms, runtimeTrainTransform, validTransform)
+        # Creating an instance of desired datasetHandler
+        datasetHandler = getDatasetHandler.get(dataset=config.datasets[i])
 
-    # Creating an instance of desired datasetHandler
-    datasetHandler = getDatasetHandler.get(dataset=config.dataset)
+        # Creating the dataset object. It will take care of Downloading and unpacking the dataset if it's not available
+        # If the dataset is preprocessed before,
+        # it can be used by setting the --usePreprocessed argument in command-line
+        # preload option, will load the whole dataset to memory on init. use it with --preload
+        datasetHandler.createDataset(transform=preTransforms,
+                                     preload=config.preload
+                                     )
+        # Splitting the created dataset in train, validate, and test set.
+        trainLoader, validateLoader, testLoader = datasetHandler.getLoaders(trainSize=config.splitSize[0],
+                                                                            validateSize=config.splitSize[1],
+                                                                            testSize=config.splitSize[2],
+                                                                            batchSize=config.batchSize)
 
-    # Creating the dataset object. It will take care of Downloading and unpacking the dataset if it's not available
-    # If the dataset is preprocessed before, it can be used by setting the --usePreprocessed argument in command-line
-    # preload option, will load the whole dataset to memory on init. use it with --preload
-    datasetHandler.createDataset(features=config.features,
-                                 transform=preTransforms,
-                                 preload=config.preload,
-                                 usePreprocessed=config.usePreprocessed)
-
-    # Splitting the created dataset in train, validate, and test set.
-    trainLoader, validateLoader, testLoader = datasetHandler.getLoaders(trainSize=config.splitSize[0],
-                                                                        validateSize=config.splitSize[1],
-                                                                        testSize=config.splitSize[2],
-                                                                        batchSize=config.batchSize)
-
-    if config.task == 'classification':
         optimizer = optim.AdamW(model.parameters(), lr=config.lr, weight_decay=0.001)
-        criterions = {feature: nn.CrossEntropyLoss().to(config.device) for feature in config.features}
+        criterion = nn.CrossEntropyLoss().to(config.device)
+        minValidateMAE = np.inf
         for epoch in range(1, config.epochs + 1):
             log.epochBegin(epoch, config.epochs)
 
-            train(model, config.features, trainLoader, criterions, optimizer, runtimeTrainTransform)
-            validate(model, config.features, validateLoader, criterions)
+            train(model, trainLoader, criterion, optimizer, feature=feature)
+            validate(model, validateLoader, criterion, feature=feature)
 
-        test(model, config.features, testLoader, criterions)
+        test(model, testLoader, criterion, feature=feature)
 
 
 class AverageMeter(object):
@@ -87,168 +87,151 @@ class AverageMeter(object):
         self.avg = self.sum / self.count
 
 
-def train(model, features, trainLoader, criterions, optimizer, runtimeTrainTransform):
-    lossMonitor = {feature: AverageMeter() for feature in features}
-    accMonitor = {feature: AverageMeter() for feature in features}
+def train(model, trainLoader, criterion, optimizer, feature=None):
+    log.trainBegin()
+    lossMonitor = AverageMeter()
+    accMonitor = AverageMeter()
 
     model.train()
     numOfBatches = len(trainLoader)
-    for batch, (image, labels) in enumerate(trainLoader):
-        image = image.to(config.device)
-        labels = {feature: labels[feature].to(config.device) for feature in features}
+    for batch, (x, y) in enumerate(trainLoader):
+        x = x.to(config.device)
+        y = y[feature].to(config.device) if feature is not None else y.to(config.device)
 
-        if runtimeTrainTransform is not None:
-            image = runtimeTrainTransform(image)
+        x = resnet(x).detach().to(config.device)
 
         # compute output
-        outputs = model(image)
-        loss = {}
-        batchLoss = {}
-        predicted = {}
-        correctCount = {}
-        batchSize = image.size(0)
-        for feature in features:
-            # calc loss
-            loss[feature] = criterions[feature](outputs[feature], labels[feature])
-            batchLoss[feature] = loss[feature].item()
+        outputs = model(x)
 
-            # calc accuracy
-            _, predicted[feature] = outputs[feature].max(1)
-            correctCount[feature] = predicted[feature].eq(labels[feature]).sum().item()
+        batchSize = x.size(0)
+        # calc loss
+        loss = criterion(outputs, y)
+        batchLoss = loss.item()
 
-            # measure accuracy and record loss
-            lossMonitor[feature].update(batchLoss[feature], batchSize)
-            accMonitor[feature].update(correctCount[feature], batchSize)
+        # calc accuracy
+        _, predicted = outputs.max(1)
+        correctCount = predicted.eq(y).sum().item()
+
+        # measure accuracy and record loss
+        lossMonitor.update(batchLoss, batchSize)
+        accMonitor.update(correctCount, batchSize)
 
         # compute gradient and do SGD step
-        loss = sum(loss.values())
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
         if batch % 10 == 0:
-            batchAcc = {feature: correctCount[feature] / batchSize for feature in features}
-            log.batch(features, batch, numOfBatches, batchLoss, batchAcc)
+            batchAcc = correctCount / batchSize
+            log.batch(feature, batch, numOfBatches, batchLoss, batchAcc)
 
-    trainLoss = {feature: lossMonitor[feature].avg for feature in features}
-    trainAcc = {feature: accMonitor[feature].avg for feature in features}
+    trainLoss = lossMonitor.avg
+    trainAcc = accMonitor.avg
 
-    log.train(features, trainLoss, trainAcc)
+    log.trainEnd(feature, trainLoss, trainAcc)
     return
 
 
-minValidateMAE = {}
-
-
-def validate(model, features, validateLoader, criterions):
+def validate(model, validateLoader, criterion, feature=None):
     global minValidateMAE
-    if len(minValidateMAE) == 0:
-        minValidateMAE = {feature: np.inf for feature in features}
 
     model.eval()
-    lossMonitor = {feature: AverageMeter() for feature in features}
-    accMonitor = {feature: AverageMeter() for feature in features}
-    preds = {feature: [] for feature in features}
-    gt = {feature: [] for feature in features}
+    lossMonitor = AverageMeter()
+    accMonitor = AverageMeter()
+    preds = []
+    gt = []
 
     with torch.no_grad():
-        for batch, (image, labels) in enumerate(validateLoader):
-            image = image.to(config.device)
-            labels = {feature: labels[feature].to(config.device) for feature in features}
+        for batch, (x, y) in enumerate(validateLoader):
+            x = x.to(config.device)
+            y = y[feature].to(config.device) if feature is not None else y.to(config.device)
+
+            x = resnet(x).detach()
 
             # compute output
-            outputs = model(image)
-            for feature in features:
-                preds[feature].append(F.softmax(outputs[feature], dim=-1).cpu().numpy())
-                gt[feature].append(labels[feature].cpu().numpy())
+            outputs = model(x)
+
+            preds.append(F.softmax(outputs, dim=-1).cpu().numpy())
+            gt.append(y.cpu().numpy())
 
             # calc loss
-            loss = {feature: criterions[feature](outputs[feature], labels[feature]) for feature in features}
-            batchLoss = {feature: loss[feature].item() for feature in features}
+            loss = criterion(outputs, y)
+            batchLoss = loss.item()
 
-            predicted = {}
-            correctCount = {}
-            batchSize = image.size(0)
-            for feature in features:
-                # calc accuracy
-                _, predicted[feature] = outputs[feature].max(1)
-                correctCount[feature] = predicted[feature].eq(labels[feature]).sum().item()
+            batchSize = x.size(0)
+            # calc accuracy
+            _, predicted = outputs.max(1)
+            correctCount = predicted.eq(y).sum().item()
 
-                # measure accuracy and record loss
-                lossMonitor[feature].update(batchLoss[feature], batchSize)
-                accMonitor[feature].update(correctCount[feature], batchSize)
+            # measure accuracy and record loss
+            lossMonitor.update(batchLoss, batchSize)
+            accMonitor.update(correctCount, batchSize)
 
-    mae = {}
-    for feature in features:
-        preds[feature] = np.concatenate(preds[feature], axis=0)
-        classes = np.arange(0, preds[feature].shape[1])
-        gt[feature] = np.concatenate(gt[feature], axis=0)
-        ave_preds = (preds[feature] * classes).sum(axis=-1)
-        diff = ave_preds - gt[feature]
-        mae[feature] = np.abs(diff).mean()
+    preds = np.concatenate(preds, axis=0)
+    classes = np.arange(0, preds.shape[1])
+    gt = np.concatenate(gt, axis=0)
+    ave_preds = (preds * classes).sum(axis=-1)
+    diff = ave_preds - gt
+    mae = np.abs(diff).mean()
 
-    validateLoss = {feature: lossMonitor[feature].avg for feature in features}
-    validateAcc = {feature: accMonitor[feature].avg for feature in features}
-    validateMAE = {feature: mae[feature] for feature in features}
+    validateLoss = lossMonitor.avg
+    validateAcc = accMonitor.avg
+    validateMAE = mae
 
-    # TODO
-    isLearned = validateMAE['age'] < minValidateMAE['age']
+    isLearned = validateMAE < minValidateMAE
     if isLearned:
-        minValidateMAE = {feature: validateMAE[feature] for feature in features}
+        minValidateMAE = validateMAE
         torch.save(model.state_dict(),
-                   os.path.join(config.outputDir, 'model.pt'))
+                   os.path.join(config.outputDir, str(feature) + '_model.pt'))
 
-    log.validate(features, validateLoss, validateAcc, validateMAE, isLearned)
+    log.validate(feature, validateLoss, validateAcc, validateMAE, isLearned)
     return
 
 
-def test(model, features, testLoader, criterions):
+def test(model, testLoader, criterion, feature=None):
     model.eval()
-    lossMonitor = {feature: AverageMeter() for feature in features}
-    accMonitor = {feature: AverageMeter() for feature in features}
-    preds = {feature: [] for feature in features}
-    gt = {feature: [] for feature in features}
+    lossMonitor = AverageMeter()
+    accMonitor = AverageMeter()
 
+    preds = []
+    gt = []
     with torch.no_grad():
-        for batch, (image, labels) in enumerate(testLoader):
-            image = image.to(config.device)
-            labels = {feature: labels[feature].to(config.device) for feature in features}
+        for batch, (x, y) in enumerate(testLoader):
+            x = x.to(config.device)
+            y = y[feature].to(config.device) if feature is not None else y.to(config.device)
+
+            x = resnet(x).detach()
 
             # compute output
-            outputs = model(image)
-            for feature in features:
-                preds[feature].append(F.softmax(outputs[feature], dim=-1).cpu().numpy())
-                gt[feature].append(labels[feature].cpu().numpy())
+            outputs = model(x)
+            preds.append(F.softmax(outputs, dim=-1).cpu().numpy())
+            gt.append(y.cpu().numpy())
 
             # calc loss
-            loss = {feature: criterions[feature](outputs[feature], labels[feature]) for feature in features}
-            batchLoss = {feature: loss[feature].item() for feature in features}
+            loss = criterion(outputs, y)
+            batchLoss = loss.item()
 
-            predicted = {}
-            correctCount = {}
-            batchSize = image.size(0)
-            for feature in features:
-                # calc accuracy
-                _, predicted[feature] = outputs[feature].max(1)
-                correctCount[feature] = predicted[feature].eq(labels[feature]).sum().item()
+            batchSize = x.size(0)
 
-                # measure accuracy and record loss
-                lossMonitor[feature].update(batchLoss[feature], batchSize)
-                accMonitor[feature].update(correctCount[feature], batchSize)
+            # calc accuracy
+            _, predicted = outputs.max(1)
+            correctCount = predicted.eq(y).sum().item()
 
-    mae = {}
-    for feature in features:
-        preds[feature] = np.concatenate(preds[feature], axis=0)
-        classes = np.arange(0, preds[feature].shape[1])
-        gt[feature] = np.concatenate(gt[feature], axis=0)
-        ave_preds = (preds[feature] * classes).sum(axis=-1)
-        diff = ave_preds - gt[feature]
-        mae[feature] = np.abs(diff).mean()
+            # measure accuracy and record loss
+            lossMonitor.update(batchLoss, batchSize)
+            accMonitor.update(correctCount, batchSize)
 
-    testLoss = {feature: lossMonitor[feature].avg for feature in features}
-    testAcc = {feature: accMonitor[feature].avg for feature in features}
-    testMAE = {feature: mae[feature] for feature in features}
+    preds = np.concatenate(preds, axis=0)
+    classes = np.arange(0, preds.shape[1])
+    gt = np.concatenate(gt, axis=0)
+    ave_preds = (preds * classes).sum(axis=-1)
+    diff = ave_preds - gt
+    mae = np.abs(diff).mean()
 
-    log.test(features, testLoss, testAcc, testMAE)
+    testLoss = lossMonitor.avg
+    testAcc = accMonitor.avg
+    testMAE = mae
+
+    log.test(feature, testLoss, testAcc, testMAE)
     return
 
 
