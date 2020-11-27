@@ -7,7 +7,7 @@ from PIL import Image
 from parse import parse
 import torch.utils.data
 
-from config import config
+from helpers.config import config
 from dataLoaders.datasetHandler import DatasetHandler
 
 

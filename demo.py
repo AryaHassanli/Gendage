@@ -4,7 +4,7 @@ import sys
 import cv2
 import torch
 
-from config import config
+from helpers.config import config
 from helpers import eval
 from helpers import faceProcess
 from helpers import getNet

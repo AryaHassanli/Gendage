@@ -2,7 +2,7 @@ import json
 
 import paramiko
 
-from config import config
+from helpers.config import config
 
 
 class Remote:
