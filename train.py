@@ -8,7 +8,7 @@ import torch.optim as optim
 import torchvision.transforms as transforms
 from facenet_pytorch import InceptionResnetV1
 
-from config import config
+from helpers.config import config
 from defaults import trainConfig
 from helpers import getDatasetHandler
 from helpers import getNet

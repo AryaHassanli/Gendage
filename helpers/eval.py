@@ -1,10 +1,9 @@
 import numpy as np
 import torch
 import torch.nn.functional as F
-import torchvision.transforms as transforms
 from facenet_pytorch import InceptionResnetV1
 
-from config import config
+from helpers.config import config
 
 resnet = InceptionResnetV1(pretrained='vggface2').eval().to(config.device)
 

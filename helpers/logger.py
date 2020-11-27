@@ -3,7 +3,7 @@ import os
 import sys
 import time
 
-from config import config
+from helpers.config import config
 
 
 class Train:

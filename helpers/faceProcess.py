@@ -1,6 +1,6 @@
 from facenet_pytorch import MTCNN
 from PIL import Image
-from config import config
+from helpers.config import config
 
 
 def detect(frame):
