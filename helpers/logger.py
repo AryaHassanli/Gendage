@@ -1,11 +1,9 @@
 import logging
 import os
-import posixpath
 import sys
 import time
 
 from config import config
-from helpers import remote
 
 
 class Train:
@@ -13,21 +11,13 @@ class Train:
         self.log = logging.getLogger()
         self.log.setLevel(logging.INFO)
         self.logFile = os.path.join(config.outputDir, 'output.log')
-        self.remoteLogFile = os.path.join(config.remoteDir, 'output.log').replace(os.sep, posixpath.sep)
         self.log.addHandler(logging.FileHandler(self.logFile))
         self.log.addHandler(logging.StreamHandler(sys.stdout))
+
         self.dictionary = {}
+        self.trainBeginTime = 0
 
         logging.getLogger("paramiko").setLevel(logging.WARNING)
-        self.remoteHandler = remote.Remote()
-
-    def uploadLog(self):
-        self.remoteHandler.upload(self.logFile, self.remoteLogFile)
-        pass
-
-    def addToDict(self, dictionary):
-        for key, value in dictionary.items():
-            self.dictionary[key] = value
 
     def environment(self):
         self.log.info(str(config.__dict__).replace(',', ',\n'))
@@ -48,44 +38,45 @@ class Train:
     def epochBegin(self, epoch, numOfEpochs):
         self.log.info("Epoch: {}/{}".format(epoch, numOfEpochs))
 
-    def train(self, features, trainLoss, trainAcc):
-        self.log.info('\n\tTrain:')
-        for feature in features:
-            self.log.info('\t\t{} -> Loss: {}, Accuracy: {}%'.format(
-                feature,
-                round(trainLoss[feature], 4),
-                round(100 * trainAcc[feature], 2)))
+    def trainBegin(self):
+        self.trainBeginTime = time.time()
+
+    def trainEnd(self, feature, trainLoss, trainAcc):
+        self.log.info('\n\tTrain Done in {}ms:'.format(
+            round(1000 * (time.time() - self.trainBeginTime), 2)
+        ))
+        self.log.info('\t\t{} -> Loss: {}, Accuracy: {}%'.format(
+            feature,
+            round(trainLoss, 4),
+            round(100 * trainAcc, 2)))
         pass
 
-    def batch(self, features, batch, numOfBatches, batchLoss, batchAcc):
-        for feature in features:
-            self.log.info('\tBatch: {}/{}, {} -> loss: {}, accuracy: {}%'.format(
-                batch, numOfBatches,
-                feature,
-                round(batchLoss[feature], 4),
-                round(100 * batchAcc[feature], 2)
-            ))
+    def batch(self, feature, batch, numOfBatches, batchLoss, batchAcc):
+        self.log.info('\tBatch: {}/{}, {} -> loss: {}, accuracy: {}%'.format(
+            batch, numOfBatches,
+            feature,
+            round(batchLoss, 4),
+            round(100 * batchAcc, 2)
+        ))
 
-    def validate(self, features, validateLoss, validateAcc, validateMAE, isLearned):
+    def validate(self, feature, validateLoss, validateAcc, validateMAE, isLearned):
         self.log.info('\tValidation:')
-        for feature in features:
-            self.log.info('\t\t{} -> Loss: {}, Accuracy: {}%, MAE: {}'.format(
-                feature,
-                round(validateLoss[feature], 4),
-                round(100 * validateAcc[feature], 2),
-                round(validateMAE[feature], 2)))
+        self.log.info('\t\t{} -> Loss: {}, Accuracy: {}%, MAE: {}'.format(
+            feature,
+            round(validateLoss, 4),
+            round(100 * validateAcc, 2),
+            round(validateMAE, 2)))
         if isLearned:
             self.log.info('\tNetwork Improved. saving the model.')
         pass
 
-    def test(self, features, testLoss, testAcc, testMAE):
+    def test(self, feature, testLoss, testAcc, testMAE):
         self.log.info('Test:')
-        for feature in features:
-            self.log.info('\t{} -> Loss: {}, Accuracy: {}%, MAE: {}'.format(
-                feature,
-                round(testLoss[feature], 4),
-                round(100 * testAcc[feature], 2),
-                round(testMAE[feature], 2)))
+        self.log.info('\t{} -> Loss: {}, Accuracy: {}%, MAE: {}'.format(
+            feature,
+            round(testLoss, 4),
+            round(100 * testAcc, 2),
+            round(testMAE, 2)))
 
 
 class Demo:
