@@ -1,7 +1,7 @@
 import torchvision.transforms as transforms
 
 options = {
-    "datasetsDir":  "D:/MsThesis/datasets",
+    "datasetsDir":  "datasets",
     "outputDir":    "output",
 
     "nets":         ["simClass", "simClass"],
@@ -9,10 +9,10 @@ options = {
     "features":     ["gender", "age"],
     "numOfClasses": [2, 120],
 
-    "preload":      False,
+    "preload":      True,
 
     "splitSize":    [0.7, 0.2, 0.1],
-    "batchSize":    32,
+    "batchSize":    128,
     "epochs":       20,
     "lr":           0.005,
 
