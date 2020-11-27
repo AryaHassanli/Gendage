@@ -17,20 +17,27 @@ config.setup(args)
 log = logger.Demo()
 log.environment()
 
+ageModel = getNet.get('simClass', numOfClasses=120).to(config.device)
+ageModel.load_state_dict(
+    torch.load('D:/Gendage/output/age_model.pt')
+)
+genderModel = getNet.get('simClass', numOfClasses=2).to(config.device)
+genderModel.load_state_dict(
+    torch.load('D:/Gendage/output/gender_model.pt')
+)
+
 
 def main():
-    process(online=0,
-            labelGenerators=[gendage],
-            inputFile='D:/MsThesis/inputSamples/Harry.mp4',
+    process(online=1,
+            labelGenerators=[labelGenerator],
+            inputFile='D:/MsThesis/inputSamples/Leonardo.mp4',
             outputFile='output/result.avi',
             detectionFPS=5,
             features=['age', 'gender'])
 
 
-model = getNet.get('resnet18Multi').to(config.device)
-model.load_state_dict(
-    torch.load('D:/Gendage/output/modelDouble.pt')
-)
+movingAvgs = {}
+
 
 class MovingAverage:
     def __init__(self, window):
@@ -44,14 +51,11 @@ class MovingAverage:
         return sum(self.list) / len(self.list)
 
 
-movingAvgs = {}
-
-
-def gendage(face, features=None):
+def labelGenerator(face, features=None):
     if len(movingAvgs) == 0:
         for feature in features:
             movingAvgs[feature] = MovingAverage(7)
-    out = eval.faceImage(face, model, features=features)
+    out = eval.encoderMultiTask(face, ageModel, genderModel)
     outputList = []
     for feature in features:
         outputList.append(str(round(
