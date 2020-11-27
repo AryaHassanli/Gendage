@@ -20,9 +20,13 @@ class Config:
             torch.backends.cudnn.benchmark = True
         pass
 
-    def setup(self, args, **kwargs):
-        for key in args.__dict__:
-            self.__setattr__(key, args.__getattribute__(key))
+    def setup(self, cliArgs, fileArgs, **kwargs):
+        for key, value in fileArgs.items():
+            self.__setattr__(key, value)
+
+        for key, value in cliArgs.__dict__.items():
+            if value is not None:
+                self.__setattr__(key, value)
 
         outputSubDir = datetime.datetime.now(pytz.utc).strftime("%Y-%m-%d_%H-%M-%S")
 
@@ -33,8 +37,8 @@ class Config:
                                                                                                     self.datasetsDir)
         self.absOutputDir = self.outputDir if os.path.isabs(self.outputDir) else os.path.join(self.baseDir,
                                                                                               self.outputDir)
-        self.remoteDir = os.path.join(self.remoteDir, outputSubDir).replace(os.sep,
-                                                                            posixpath.sep) if 'remoteDir' in args.__dict__ else None
+        self.remoteDir = os.path.join(self.remoteDir, outputSubDir)\
+            .replace(os.sep, posixpath.sep) if 'remoteDir' in cliArgs.__dict__ else None
         pass
 
 
