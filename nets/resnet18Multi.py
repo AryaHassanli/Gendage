@@ -169,7 +169,6 @@ class ResNet(nn.Module):
                                        dilate=replace_stride_with_dilation[2])
         self.avgpool = nn.AdaptiveAvgPool2d((1, 1))
 
-        # TODO
         self.ageFc = nn.Linear(512 * block.expansion, 120)
         self.genderFc = nn.Linear(512 * block.expansion, 2)
 
