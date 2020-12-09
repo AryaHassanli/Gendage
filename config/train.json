@@ -1,0 +1,19 @@
+{
+    "datasets_dir":      "datasets",
+    "output_dir":        "output",
+
+    "encoder":          "mobilenet_v3_small",
+    "encoder_pretrain": "models/encoder/mobilenet_v3_small_1.pt",
+
+    "features":         ["gender", "gender", "age", "age"],
+    "classifiers":      ["simple", "simple","simple","simple"],
+    "datasets":         ["AgeDB", "UTKFace","AgeDB", "UTKFace"],
+    "num_classes":      [2, 2, 120, 120],
+
+    "preload":          1,
+
+    "split_size":        [0.7, 0.2, 0.1],
+    "batch_size":        128,
+    "epochs":           30,
+    "lr":               0.002
+}
