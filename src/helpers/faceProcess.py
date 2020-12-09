@@ -1,6 +1,6 @@
 from facenet_pytorch import MTCNN
 from PIL import Image
-from helpers.config import config
+from src.helpers.config import config
 
 
 def detect(frame):
@@ -24,10 +24,10 @@ def detect(frame):
     return faces
 
 
-def align(faceImage):
-    x, y = faceImage.size
+def align(face_image):
+    x, y = face_image.size
     size = max(x, y)
-    faceSq = Image.new('RGB', (size, size), (0, 0, 0))
-    faceSq.paste(faceImage, (int((size - x) / 2), int((size - y) / 2)))
+    face_sq = Image.new('RGB', (size, size), (0, 0, 0))
+    face_sq.paste(face_image, (int((size - x) / 2), int((size - y) / 2)))
 
-    return faceSq
+    return face_sq
