@@ -7,25 +7,25 @@ from PIL import Image
 from parse import parse
 import torch.utils.data
 
-from helpers.config import config
-from dataLoaders.datasetHandler import DatasetHandler
+from src.helpers.config import config
+from . import DatasetHandler
 
 
 class UTKFaceHandler(DatasetHandler):
     def __init__(self):
-        self.directory = os.path.join(config.absDatasetsDir, 'UTKFace')
-        self.zipFile = os.path.join(config.absDatasetsDir, 'UTKFace.tar.gz')
+        self.directory = os.path.join(config.abs_datasets_dir, 'UTKFace')
+        self.zipFile = os.path.join(config.abs_datasets_dir, 'UTKFace.tar.gz')
         self.dataset = None
         self.trainDataset = None
         self.testDataset = None
         self.validateDataset = None
 
-    def createDataset(self, transform, **kwargs):
-        self.__prepareOnDisk()
+    def create_dataset(self, transform, **kwargs):
+        self.__prepare_on_disk()
         self.dataset = UTKFaceDataset(directory=self.directory, transform=transform, **kwargs)
         return self.dataset
 
-    def __prepareOnDisk(self):
+    def __prepare_on_disk(self):
         if os.path.exists(self.directory):
             if len(os.listdir(self.directory)) != 0:
                 print('UTK Already Exists on',
@@ -37,7 +37,7 @@ class UTKFaceHandler(DatasetHandler):
             print(self.zipFile, 'is found. Trying to extract:')
             try:
                 tar = tarfile.open(self.zipFile, "r:gz")
-                tar.extractall(path=config.absDatasetsDir)
+                tar.extractall(path=config.abs_datasets_dir)
                 tar.close()
                 print('Successfully extracted')
             except tarfile.TarError:
