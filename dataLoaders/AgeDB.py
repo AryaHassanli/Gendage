@@ -7,27 +7,27 @@ from PIL import Image
 from parse import parse
 import torch.utils.data
 
-from helpers.config import config
-from dataLoaders.datasetHandler import DatasetHandler
+from src.helpers.config import config
+from . import DatasetHandler
 
 
 class AgeDBHandler(DatasetHandler):
     def __init__(self):
-        self.directory = os.path.join(config.absDatasetsDir, 'AgeDB')
-        self.zipFile = os.path.join(config.absDatasetsDir, 'AgeDB.zip')
+        self.directory = os.path.join(config.abs_datasets_dir, 'AgeDB')
+        self.zipFile = os.path.join(config.abs_datasets_dir, 'AgeDB.zip')
         self.dataset = None
         self.trainDataset = None
         self.testDataset = None
         self.validateDataset = None
 
-    def createDataset(self, transform, **kwargs):
-        self.__prepareOnDisk()
+    def create_dataset(self, transform, **kwargs):
+        self.__prepare_on_disk()
         self.dataset = AgeDBDataset(directory=self.directory,
                                     transform=transform,
                                     **kwargs)
         return self.dataset
 
-    def __prepareOnDisk(self):
+    def __prepare_on_disk(self):
         if os.path.exists(self.directory):
             if len(os.listdir(self.directory)) != 0:
                 print('AgeDB Already Exists on ' +
@@ -38,7 +38,7 @@ class AgeDBHandler(DatasetHandler):
         if os.path.exists(self.zipFile):
             print(self.zipFile, 'is found. Trying to extract:')
             with zipfile.ZipFile(self.zipFile) as zf:
-                zf.extractall(pwd=b'ibugAgeDBv2017a', path=config.absDatasetsDir)
+                zf.extractall(pwd=b'ibugAgeDBv2017a', path=config.abs_datasets_dir)
             print('Successfully extracted')
         else:
             sys.exit('AgeDB Zip file not found!')
