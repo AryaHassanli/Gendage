@@ -3,14 +3,16 @@ import os
 import sys
 import time
 
-from helpers.config import config
+from src.helpers.config import config
 
+
+# TODO: reformat
 
 class Train:
     def __init__(self):
         self.log = logging.getLogger()
         self.log.setLevel(logging.INFO)
-        self.logFile = os.path.join(config.outputDir, 'output.log')
+        self.logFile = os.path.join(config.output_dir, 'output.log')
         self.log.addHandler(logging.FileHandler(self.logFile))
         self.log.addHandler(logging.StreamHandler(sys.stdout))
 
@@ -23,9 +25,9 @@ class Train:
         self.log.info(str(config.__dict__).replace(',', ',\n'))
         pass
 
-    def transforms(self, preTransforms, runtimeTrainTransform, validTransform):
+    def transforms(self, pre_transforms, runtimeTrainTransform, validTransform):
         self.log.info('preTransforms:')
-        for transform in preTransforms.transforms:
+        for transform in pre_transforms.transforms:
             self.log.info('\t' + str(transform))
         self.log.info('runtimeTrainTransform:')
         for transform in runtimeTrainTransform.transforms:
@@ -83,7 +85,7 @@ class Demo:
     def __init__(self):
         self.log = logging.getLogger()
         self.log.setLevel(logging.INFO)
-        self.logFile = os.path.join(config.outputDir, 'output.log')
+        self.logFile = os.path.join(config.output_dir, 'output.log')
         self.log.addHandler(logging.FileHandler(self.logFile))
         self.log.addHandler(logging.StreamHandler(sys.stdout))
 
