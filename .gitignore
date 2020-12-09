@@ -1,3 +1,4 @@
+/.idea
 Dockerfile
 /.ps_project
 tmp/**
