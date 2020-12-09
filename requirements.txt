@@ -1,3 +1,5 @@
+--find-links https://download.pytorch.org/whl/torch_stable.html
+
 matplotlib~=3.3.2
 numpy==1.19.1
 torchvision~=0.8.1
