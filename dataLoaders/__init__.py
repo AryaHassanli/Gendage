@@ -1,4 +1,5 @@
 import os
+from .dataset_handler import DatasetHandler
 
 dataLoadersDir = 'dataLoaders'
 __all__ = [f[:-3] for f in os.listdir(dataLoadersDir) if
