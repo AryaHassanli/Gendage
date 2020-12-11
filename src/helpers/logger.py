@@ -144,3 +144,68 @@ class Demo:
             round(1000 * self.__totalDetectTime / self.__totalDetections, 1)
         ))
         pass
+
+
+class Run:
+    def __init__(self):
+        self.log = logging.getLogger()
+        self.log.setLevel(logging.INFO)
+        self.logFile = os.path.join(config.output_dir, 'output.log')
+        self.log.addHandler(logging.FileHandler(self.logFile))
+        self.log.addHandler(logging.StreamHandler(sys.stdout))
+
+        self.__frameCount = 0
+        self.__frameStart = 0
+        self.__frameTime = 0
+        self.__totalFrameTime = 0
+
+        self.__detectStart = 0
+        self.__detectTime = 0
+        self.__totalDetectTime = 0
+        self.__totalDetections = 0
+
+    def environment(self):
+        self.log.info(str(config.__dict__).replace(',', ',\n'))
+        pass
+
+    def frameBegin(self):
+        self.__frameStart = time.time()
+        pass
+
+    def frameEnd(self, frameNo):
+        self.__frameTime = time.time() - self.__frameStart
+        self.__totalFrameTime += self.__frameTime
+        self.log.info('Frame {}/{} Processed in {}ms\t'.format(
+            frameNo,
+            self.__frameCount,
+            round(1000 * self.__frameTime, 1)
+        ))
+        pass
+
+    def detectBegin(self):
+        self.__detectStart = time.time()
+        pass
+
+    def detectEnd(self, numOfFaces):
+        self.__detectTime = time.time() - self.__detectStart
+        self.__totalDetectTime += self.__detectTime
+        self.__totalDetections += numOfFaces
+        pass
+
+    def programBegin(self, frameCount):
+        self.__frameCount = int(frameCount)
+
+    def programEnd(self):
+        self.log.info("\n")
+        self.log.info("Total Frames: {}".format(self.__frameCount))
+        self.log.info("Total Frame Process Time: {}ms, Average: {}ms".format(
+            round(1000 * self.__totalFrameTime, 1),
+            round(1000 * self.__totalFrameTime / self.__frameCount, 1)
+        ))
+        self.log.info('\n')
+        self.log.info("Total Faces detected: {}".format(self.__totalDetections))
+        self.log.info("Total Detection Time: {}ms, Average: {}ms".format(
+            round(1000 * self.__totalDetectTime, 1),
+            round(1000 * self.__totalDetectTime / self.__totalDetections, 1)
+        ))
+        pass
