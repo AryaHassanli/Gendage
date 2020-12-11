@@ -23,13 +23,22 @@ class Config:
         ])
         pass
 
-    def setup(self, cli_args, file_args):
-        for key, value in file_args.items():
+    def setup(self, default_args, file_args, cli_args):
+        for key, value in default_args.items():
             self.__setattr__(key, value)
+
+        for key, value in file_args.items():
+            if value is not None or value != "":
+                self.__setattr__(key, value)
 
         for key, value in cli_args.__dict__.items():
             if value is not None:
                 self.__setattr__(key, value)
+
+        if hasattr(self,'classifier_pretrain'):
+            for i, item in enumerate(self.classifier_pretrain):
+                if item == "None":
+                    self.classifier_pretrain[i] = None
 
         # output_sub_dir = datetime.datetime.now(pytz.utc).strftime("%Y-%m-%d_%H-%M-%S")
         output_sub_dir = ''
