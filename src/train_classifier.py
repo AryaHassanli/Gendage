@@ -27,7 +27,8 @@ def main():
     for i, feature in enumerate(config.features):
         if feature not in models:
             models[feature] = getClassifier.get(config.classifiers[i], inputSize=512,
-                                                numOfClasses=config.num_classes[i]).to(config.device)
+                                                numOfClasses=config.num_classes[i],
+                                                pretrained=config.classifier_pretrain[i]).to(config.device)
         model = models[feature]
 
         # Creating an instance of desired dataset_handler
@@ -49,13 +50,17 @@ def main():
         optimizer = torch.optim.AdamW(model.parameters(), lr=config.lr, weight_decay=0.001)
         criterion = nn.CrossEntropyLoss().to(config.device)
         minValidateMAE = np.inf
-        for epoch in range(1, config.epochs + 1):
-            log.epochBegin(epoch, config.epochs)
+        if len(train_loader) > 0:
+            for epoch in range(1, config.epochs + 1):
+                log.epochBegin(epoch, config.epochs)
 
-            train(model, train_loader, criterion, optimizer, feature=feature)
-            validate(model, validate_loader, criterion, feature=feature)
+                train(model, train_loader, criterion, optimizer, feature=feature)
 
-        test(model, test_loader, criterion, feature=feature)
+                if len(validate_loader) > 0:
+                    validate(model, validate_loader, criterion, feature=feature)
+
+        if len(test_loader) > 0:
+            test(model, test_loader, criterion, feature=feature)
 
 
 class AverageMeter(object):
