@@ -10,6 +10,7 @@ import torch.utils.data
 from src.helpers.config import config
 from . import DatasetHandler
 
+zip_pass = b'UNKNOWN'
 
 class AgeDBHandler(DatasetHandler):
     def __init__(self):
@@ -38,7 +39,7 @@ class AgeDBHandler(DatasetHandler):
         if os.path.exists(self.zipFile):
             print(self.zipFile, 'is found. Trying to extract:')
             with zipfile.ZipFile(self.zipFile) as zf:
-                zf.extractall(pwd=b'UNKNOWN', path=config.abs_datasets_dir)
+                zf.extractall(pwd=zip_pass, path=config.abs_datasets_dir)
             print('Successfully extracted')
         else:
             sys.exit('AgeDB Zip file not found!')
