@@ -1,5 +1,7 @@
 import torch.nn as nn
 import torch
+from src.helpers.config import config
+
 
 class SimpleClassifier(nn.Module):
     def __init__(self, inputSize, numOfClasses):
@@ -16,7 +18,7 @@ def simple(pretrained=None, **kwargs):
     inputSize = kwargs.get('inputSize', 512)
     model = SimpleClassifier(inputSize, numOfClasses)
     if pretrained:
-        state_dict = torch.load(pretrained)
+        state_dict = torch.load(pretrained, map_location=config.device)
         model.load_state_dict(state_dict, strict=True)
 
     return model

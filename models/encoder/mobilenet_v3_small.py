@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from src.helpers.config import config
 
 
 def conv_bn(inp, oup, stride, conv_layer=nn.Conv2d, norm_layer=nn.BatchNorm2d, nlin_layer=nn.ReLU):
@@ -238,7 +239,7 @@ class MobileNetV3(nn.Module):
 def mobilenet_v3_small(pretrained=None, **kwargs):
     model = MobileNetV3(classify=True, n_class=8631, mode='small')
     if pretrained:
-        state_dict = torch.load(pretrained)
+        state_dict = torch.load(pretrained, map_location=config.device)
         model.load_state_dict(state_dict, strict=True)
         model.classify = False
     return model
