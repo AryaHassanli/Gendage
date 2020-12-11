@@ -101,7 +101,8 @@ def add_run(parser_run):
                                 nargs=nargs,
                                 type=type_,
                                 choices=choices,
-                                default=default,
-                                help=help_ + ("choices: %(choices)s" if choices else "")
+                                default=None,
+                                help=help_ + (" (choices: %(choices)s)" if choices else "") + ", (default: " + str(
+                                    default) + ")"
                                 )
     pass
