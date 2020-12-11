@@ -23,9 +23,7 @@ class Config:
         ])
         pass
 
-    def setup(self, default_args, file_args, cli_args):
-        for key, value in default_args.items():
-            self.__setattr__(key, value)
+    def setup(self, file_args, cli_args):
 
         for key, value in file_args.items():
             if value is not None or value != "":
@@ -35,7 +33,7 @@ class Config:
             if value is not None:
                 self.__setattr__(key, value)
 
-        if hasattr(self,'classifier_pretrain'):
+        if hasattr(self, 'classifier_pretrain'):
             for i, item in enumerate(self.classifier_pretrain):
                 if item == "None":
                     self.classifier_pretrain[i] = None

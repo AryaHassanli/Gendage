@@ -1,26 +1,28 @@
 from src.helpers.config import config
 # noinspection PyUnresolvedReferences
 from src.helpers import parseArguments
-import os
 import json
+
+
+# TODO: Add preprocess command
 
 
 def main():
     cli_args = parseArguments.parse()
-    config_file = cli_args.config_file
+    cli_args = validate(cli_args)
 
+    config_file = cli_args.config_file
     # TODO: detect if the file is in config or not
     # TODO: Validate inputs
+    file_args = {}
+    if config_file is not None:
+        with open(config_file) as f:
+            file_args = json.load(f)
 
-    with open(config_file) as f:
-        file_args = json.load(f)
-
-    cli_args = validate(cli_args)
-    config.setup(cli_args, file_args)
-
-    if cli_args.main_function == 'train':
-        from src import train
-        train.main()
+    config.setup(file_args, cli_args)
+    if cli_args.main_function == 'train_classifier':
+        from src import train_classifier
+        train_classifier.main()
     elif cli_args.main_function == 'run':
         from src import run
         run.main()
@@ -29,7 +31,6 @@ def main():
 
 def validate(cli_args):
     return cli_args
-    pass
 
 
 if __name__ == '__main__':
