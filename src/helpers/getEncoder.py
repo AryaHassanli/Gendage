@@ -8,7 +8,7 @@ from models.encoder import *
 def get(encoder_name, **kwargs):
     encoder = getattr(eval(encoder_name), encoder_name)
     if callable(encoder):
-        print(encoder_name + " Found!")
+        print(encoder_name + " Encoder is Found!")
         encoder = encoder(**kwargs)
     else:
         sys.exit('encoder not found')
