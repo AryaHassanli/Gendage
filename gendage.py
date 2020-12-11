@@ -15,15 +15,18 @@ def main():
     # TODO: detect if the file is in config or not
     # TODO: Validate inputs
     file_args = {}
+
     if config_file is not None:
-        with open(config_file) as f:
-            file_args = json.load(f)
+        config_file = config_file['value']
+        if config_file is not None:
+            with open(config_file) as f:
+                file_args = json.load(f)
 
     config.setup(file_args, cli_args)
-    if cli_args.main_function == 'train_classifier':
+    if config.main_function == 'train_classifier':
         from src import train_classifier
         train_classifier.main()
-    elif cli_args.main_function == 'run':
+    elif config.main_function == 'run':
         from src import run
         run.main()
     pass

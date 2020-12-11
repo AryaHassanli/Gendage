@@ -1,22 +1,41 @@
 import argparse
 import json
+import copy
 
 
 def parse():
     # noinspection PyTypeChecker
-    parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter, description='',
+    parser = argparse.ArgumentParser(description='',
                                      fromfile_prefix_chars='@')
 
     subparsers = parser.add_subparsers(help='list of commands', dest='main_function')
     parser_train = subparsers.add_parser('train_classifier', help='use for train or test classifiers on a dataset',
-                                         formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+                                         )
     add_train_classifier(parser_train)
 
-    parser_run = subparsers.add_parser('run', help='a help', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    parser_run = subparsers.add_parser('run', help='a help')
     add_run(parser_run)
 
     args = parser.parse_args()
-    return args
+
+    function = args.main_function
+    with open("src/defaults/"+str(function)+".json") as f:
+        defaults = json.load(f)
+
+    args_new = copy.deepcopy(args)
+    for key, value in args.__dict__.items():
+        if key == 'main_function' or key == 'config_file':
+            args_new.__setattr__(key, {
+                'value': value,
+                'default': value
+            })
+            continue
+        default = defaults[key]['default']
+        args_new.__setattr__(key, {
+            'value': value,
+            'default': default
+        })
+    return args_new
 
 
 def add_train_classifier(parser_train):
@@ -47,8 +66,9 @@ def add_train_classifier(parser_train):
                                   nargs=nargs,
                                   type=type_,
                                   choices=choices,
-                                  default=default,
-                                  help=help_ + ("choices: %(choices)s" if choices else "")
+                                  default=None,
+                                  help=help_ + (" (choices: %(choices)s)" if choices else "") + ", (default: " + str(
+                                      default) + ")"
                                   )
     pass
 

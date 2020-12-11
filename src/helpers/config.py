@@ -24,14 +24,17 @@ class Config:
         pass
 
     def setup(self, file_args, cli_args):
+        for argument, value_set in cli_args.__dict__.items():
+            if value_set['value'] is None:
+                self.__setattr__(argument, value_set['default'])
 
         for key, value in file_args.items():
             if value is not None or value != "":
                 self.__setattr__(key, value)
 
-        for key, value in cli_args.__dict__.items():
-            if value is not None:
-                self.__setattr__(key, value)
+        for argument, value_set in cli_args.__dict__.items():
+            if value_set['value'] is not None:
+                self.__setattr__(argument, value_set['value'])
 
         if hasattr(self, 'classifier_pretrain'):
             for i, item in enumerate(self.classifier_pretrain):
