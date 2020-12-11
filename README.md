@@ -72,6 +72,7 @@
 * [Facenet](https://github.com/davidsandberg/facenet)
 * [AgeDB](https://ibug.doc.ic.ac.uk/resources/agedb/)
 * [UTKFace](https://susanqq.github.io/UTKFace/)
+* [Persona](https://github.com/altndrr/persona)
 
 <!-- GETTING STARTED -->
 ## Getting Started
