@@ -5,7 +5,6 @@ import torch
 import torch.nn as nn
 import torch.nn.functional
 import torch.optim
-import torchvision.transforms as transforms
 
 from src.helpers import getDatasetHandler
 from src.helpers import getEncoder
@@ -95,16 +94,6 @@ def train(model, train_loader, criterion, optimizer, feature=None):
     for batch, (x, y) in enumerate(train_loader):
         x = x.to(config.device)
         y = y[feature].to(config.device) if feature is not None else y.to(config.device)
-
-        runtimeTrainTransform = transforms.Compose([
-            transforms.RandomApply([
-                transforms.RandomRotation(30, fill=0)
-            ], 0.8),
-            transforms.RandomPerspective(0.5, 0.8, fill=0),
-            transforms.RandomHorizontalFlip(0.8),
-        ])
-
-        x = runtimeTrainTransform(x)
 
         x = encoder(x).detach().to(config.device)
 
