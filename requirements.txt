@@ -12,3 +12,4 @@ ipython~=7.19.0
 facenet_pytorch
 pytz~=2020.1
 paramiko~=2.7.2
+pandas
