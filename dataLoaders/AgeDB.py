@@ -3,32 +3,57 @@ import sys
 import zipfile
 
 import torch
+import torch.utils.data
 from PIL import Image
 from parse import parse
-import torch.utils.data
-
-from src.helpers.config import config
-from . import DatasetHandler
 
 zip_pass = b'UNKNOWN'
 
-class AgeDBHandler(DatasetHandler):
-    def __init__(self):
-        self.directory = os.path.join(config.abs_datasets_dir, 'AgeDB')
-        self.zipFile = os.path.join(config.abs_datasets_dir, 'AgeDB.zip')
-        self.dataset = None
+
+class AgeDBHandler:
+    def __init__(self, datasets_dir, preload=False, use_preprocessed=True, device: torch.device = torch.device('cpu')):
+        self.device = device
+        self.preload = preload
+
+        self.datasets_dir = datasets_dir
+        self.directory = os.path.join(datasets_dir, 'AgeDB' if not use_preprocessed else 'AgeDB_preprocessed')
+        self.zipFile = os.path.join(datasets_dir, 'AgeDB.zip')
+
         self.trainDataset = None
         self.testDataset = None
         self.validateDataset = None
 
-    def create_dataset(self, transform, **kwargs):
-        self.__prepare_on_disk()
-        self.dataset = AgeDBDataset(directory=self.directory,
-                                    transform=transform,
-                                    **kwargs)
-        return self.dataset
+        self._prepare_on_disk()
 
-    def __prepare_on_disk(self):
+    def get_loaders(self, transform, train_size=0.7, validate_size=0.2, test_size=0.1, batch_size=15, **kwargs):
+        if round(train_size + validate_size + test_size, 1) > 1.0:
+            sys.exit("Sum of the percentages should be less than 1. it's " + str(
+                train_size + validate_size + test_size) + " now!")
+
+        dataset = AgeDBDataset(directory=self.directory,
+                               transform=transform,
+                               preload=self.preload,
+                               device=self.device,
+                               **kwargs)
+
+        train_len = int(len(dataset) * train_size)
+        validate_len = int(len(dataset) * validate_size)
+        test_len = int(len(dataset) * test_size)
+        others_len = len(dataset) - train_len - validate_len - test_len
+
+        self.trainDataset, self.validateDataset, self.testDataset, _ = torch.utils.data.random_split(
+            dataset, [train_len, validate_len, test_len, others_len])
+
+        # noinspection PyUnusedLocal
+        dataset = None
+
+        train_loader = torch.utils.data.DataLoader(self.trainDataset, batch_size=batch_size)
+        validate_loader = torch.utils.data.DataLoader(self.validateDataset, batch_size=batch_size)
+        test_loader = torch.utils.data.DataLoader(self.testDataset, batch_size=batch_size)
+
+        return train_loader, validate_loader, test_loader
+
+    def _prepare_on_disk(self):
         if os.path.exists(self.directory):
             if len(os.listdir(self.directory)) != 0:
                 print('AgeDB Already Exists on ' +
@@ -39,36 +64,38 @@ class AgeDBHandler(DatasetHandler):
         if os.path.exists(self.zipFile):
             print(self.zipFile, 'is found. Trying to extract:')
             with zipfile.ZipFile(self.zipFile) as zf:
-                zf.extractall(pwd=zip_pass, path=config.abs_datasets_dir)
+                zf.extractall(pwd=zip_pass, path=self.datasets_dir)
             print('Successfully extracted')
         else:
             sys.exit('AgeDB Zip file not found!')
-            # TODO: In case of zip file is missing, simply download it!
 
 
 class AgeDBDataset(torch.utils.data.Dataset):
-    def __init__(self, directory, transform, **kwargs):
+    def __init__(self, directory, transform, preload=False, device: torch.device = torch.device('cpu'), **kwargs):
+        self.device = device
         self.directory = directory if kwargs.get('usePreprocessed', 0) == 0 else os.path.join(directory, 'preProcessed')
         self.transform = transform
-        genderToClassId = {'m': 0, 'f': 1}
+        gender_to_class_id = {'m': 0, 'f': 1}
         self.labels = []
         self.images = []
-        self.preload = kwargs.get('preload', 0)
+        self.preload = preload
 
         for i, file in enumerate(os.listdir(self.directory)):
-            fileLabels = parse('{}_{}_{age}_{gender}.jpg', file)
-            if fileLabels is None:
+            if file.endswith(('_2.jpg', '_3.jpg')):  # TODO
+                continue
+            file_labels = parse('{}_{}_{age}_{gender}.jpg', file)
+            if file_labels is None:
                 continue
             if self.preload:
                 image = Image.open(os.path.join(self.directory, file)).convert('RGB')
                 if self.transform is not None:
-                    image = self.transform(image).to(config.device)
+                    image = self.transform(image).to(self.device)
             else:
                 image = os.path.join(self.directory, file)
 
             self.images.append(image)
-            gender = genderToClassId[fileLabels['gender']]
-            age = int(fileLabels['age'])
+            gender = gender_to_class_id[file_labels['gender']]
+            age = int(file_labels['age'])
             self.labels.append({
                 'age': age,
                 'gender': gender
@@ -87,7 +114,7 @@ class AgeDBDataset(torch.utils.data.Dataset):
         if not self.preload:
             image = Image.open(image).convert('RGB')
             if self.transform is not None:
-                image = self.transform(image).to(config.device)
+                image = self.transform(image).to(self.device)
 
         labels = {'age': self.labels[idx]['age'], 'gender': self.labels[idx]['gender']}
-        return image.to(config.device), labels
+        return image.to(self.device), labels
