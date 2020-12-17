@@ -1,6 +1,6 @@
 import argparse
-import json
 import copy
+import json
 
 
 def parse():
@@ -9,17 +9,18 @@ def parse():
                                      fromfile_prefix_chars='@')
 
     subparsers = parser.add_subparsers(help='list of commands', dest='main_function')
+
     parser_train = subparsers.add_parser('train_classifier', help='use for train or test classifiers on a dataset',
                                          )
     add_train_classifier(parser_train)
 
-    parser_run = subparsers.add_parser('run', help='a help')
-    add_run(parser_run)
+    parser_annotate = subparsers.add_parser('annotate', help='a help')
+    add_annotate(parser_annotate)
 
     args = parser.parse_args()
 
     function = args.main_function
-    with open("src/defaults/"+str(function)+".json") as f:
+    with open("src/defaults/" + str(function) + ".json") as f:
         defaults = json.load(f)
 
     args_new = copy.deepcopy(args)
@@ -54,34 +55,43 @@ def add_train_classifier(parser_train):
         'str': str
     }
     for argument, details in defaults.items():
+        kwargs = {}
+
         name = details['name']
-        metavar = details['metavar']
-        type_ = types[details['type']]
-        nargs = None if details['nargs'] == "None" else details['nargs']
         default = details['default']
-        choices = None if details['choices'] == "None" else details['choices']
         help_ = details['help']
+        if 'metavar' in details:
+            kwargs['metavar'] = details['metavar']
+        if 'type' in details:
+            kwargs['type'] = types[details['type']]
+        if 'nargs' in details:
+            kwargs['nargs'] = details['nargs']
+        if 'choices' in details:
+            kwargs['choices'] = details['choices']
+        if 'action' in details:
+            kwargs['action'] = details['action']
+        if 'const' in details:
+            kwargs['const'] = details['const']
+
         parser_train.add_argument('--' + name,
-                                  metavar=metavar,
-                                  nargs=nargs,
-                                  type=type_,
-                                  choices=choices,
                                   default=None,
-                                  help=help_ + (" (choices: %(choices)s)" if choices else "") + ", (default: " + str(
-                                      default) + ")"
+                                  help=help_ + (
+                                      " (choices: %(choices)s)" if 'choices' in kwargs else "") + ", (default: " + str(
+                                      default) + ")",
+                                  **kwargs
                                   )
     pass
 
 
-def add_run(parser_run):
+def add_annotate(parser_annotate):
     # TODO: modify help texts
     # TODO: retrieve actual choices
-    parser_run.add_argument('--config_file',
-                            metavar='NAME',
-                            type=str,
-                            help='Config file name. e.g. train_config if the config file is train_config.py'
-                            )
-    with open("src/defaults/run.json") as f:
+    parser_annotate.add_argument('--config_file',
+                                 metavar='NAME',
+                                 type=str,
+                                 help='Config file name. e.g. train_config if the config file is train_config.py'
+                                 )
+    with open("src/defaults/annotate.json") as f:
         defaults = json.load(f)
     types = {
         'int': int,
@@ -89,20 +99,28 @@ def add_run(parser_run):
         'str': str
     }
     for argument, details in defaults.items():
+        kwargs = {}
+
         name = details['name']
-        metavar = details['metavar']
-        type_ = types[details['type']]
-        nargs = None if details['nargs'] == "None" else details['nargs']
         default = details['default']
-        choices = None if details['choices'] == "None" else details['choices']
         help_ = details['help']
-        parser_run.add_argument('--' + name,
-                                metavar=metavar,
-                                nargs=nargs,
-                                type=type_,
-                                choices=choices,
-                                default=None,
-                                help=help_ + (" (choices: %(choices)s)" if choices else "") + ", (default: " + str(
-                                    default) + ")"
-                                )
-    pass
+        if 'metavar' in details:
+            kwargs['metavar'] = details['metavar']
+        if 'type' in details:
+            kwargs['type'] = types[details['type']]
+        if 'nargs' in details:
+            kwargs['nargs'] = details['nargs']
+        if 'choices' in details:
+            kwargs['choices'] = details['choices']
+        if 'action' in details:
+            kwargs['action'] = details['action']
+        if 'const' in details:
+            kwargs['const'] = details['const']
+
+        parser_annotate.add_argument('--' + name,
+                                     default=None,
+                                     help=help_ + (" (choices: %(choices)s)" if 'choices' in kwargs else "")
+                                          + ", (default: " + str(default) + ")",
+                                     **kwargs
+                                     )
+        pass

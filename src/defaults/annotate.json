@@ -1,0 +1,18 @@
+{
+  "input_file": {
+    "name": "input_file",
+    "metavar": "PATH",
+    "type": "str",
+    "default": null,
+    "action": "store",
+    "help": "PATH to input file."
+  },
+  "save_path": {
+    "name": "save_path",
+    "metavar": "PATH",
+    "type": "str",
+    "default": "output",
+    "action": "store",
+    "help": "PATH to save the outputs. e.g. /artifacts/output/ or output"
+  }
+}

@@ -1,6 +1,19 @@
-import os
-from .dataset_handler import DatasetHandler
+import torch
 
-dataLoadersDir = 'dataLoaders'
-__all__ = [f[:-3] for f in os.listdir(dataLoadersDir) if
-           os.path.isfile(os.path.join(dataLoadersDir, f)) and not f.endswith(('__init__.py', '__pycache__'))]
+from .AgeDB import *
+from .UTKFace import *
+
+
+def get(dataset: str,
+        datasets_dir: str = 'datasets',
+        preload: bool = False,
+        device: torch.device = torch.device('cpu'),
+        **kwargs):
+    dataset_handler_class = None
+    if dataset == 'AgeDB':
+        dataset_handler_class = AgeDBHandler
+    if dataset == 'UTKFace':
+        dataset_handler_class = UTKFaceHandler
+
+    data_obj = dataset_handler_class(datasets_dir=datasets_dir, preload=preload, device=device, **kwargs)
+    return data_obj
