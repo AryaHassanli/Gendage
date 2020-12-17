@@ -3,17 +3,17 @@ import os
 import sys
 import time
 
-from src.helpers.config import config
-
 
 # TODO: reformat
 
 class Train:
-    def __init__(self):
+    def __init__(self, output_dir):
         self.log = logging.getLogger()
         self.log.setLevel(logging.INFO)
-        self.logFile = os.path.join(config.output_dir, 'output.log')
-        self.log.addHandler(logging.FileHandler(self.logFile))
+        if not os.path.isdir(output_dir):
+            os.mkdir(output_dir)
+        self.logFile = os.path.join(output_dir, 'output.log')
+        self.log.addHandler(logging.FileHandler(self.logFile, mode='w'))
         self.log.addHandler(logging.StreamHandler(sys.stdout))
 
         self.dictionary = {}
@@ -22,7 +22,7 @@ class Train:
         logging.getLogger("paramiko").setLevel(logging.WARNING)
 
     def environment(self):
-        self.log.info(str(config.__dict__).replace(',', ',\n'))
+        # self.log.info(str(config.__dict__).replace(',', ',\n'))
         pass
 
     def transforms(self, pre_transforms, runtimeTrainTransform, validTransform):
@@ -82,10 +82,10 @@ class Train:
 
 
 class Demo:
-    def __init__(self):
+    def __init__(self, output_dir):
         self.log = logging.getLogger()
         self.log.setLevel(logging.INFO)
-        self.logFile = os.path.join(config.output_dir, 'output.log')
+        self.logFile = os.path.join(output_dir, 'output.log')
         self.log.addHandler(logging.FileHandler(self.logFile))
         self.log.addHandler(logging.StreamHandler(sys.stdout))
 
@@ -100,7 +100,7 @@ class Demo:
         self.__totalDetections = 0
 
     def environment(self):
-        self.log.info(str(config.__dict__).replace(',', ',\n'))
+        # self.log.info(str(config.__dict__).replace(',', ',\n'))
         pass
 
     def frameBegin(self):
@@ -147,10 +147,10 @@ class Demo:
 
 
 class Run:
-    def __init__(self):
+    def __init__(self, output_dir):
         self.log = logging.getLogger()
         self.log.setLevel(logging.INFO)
-        self.logFile = os.path.join(config.output_dir, 'output.log')
+        self.logFile = os.path.join(output_dir, 'output.log')
         self.log.addHandler(logging.FileHandler(self.logFile))
         self.log.addHandler(logging.StreamHandler(sys.stdout))
 
@@ -165,7 +165,7 @@ class Run:
         self.__totalDetections = 0
 
     def environment(self):
-        self.log.info(str(config.__dict__).replace(',', ',\n'))
+        # self.log.info(str(config.__dict__).replace(',', ',\n'))
         pass
 
     def frameBegin(self):
