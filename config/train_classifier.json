@@ -1,20 +1,20 @@
 {
-    "datasets_dir":      "datasets",
-    "output_dir":        "output",
+  "datasets_dir": "datasets",
+  "output_dir": "output",
 
-    "encoder":          "mobilenet_v3_small",
-    "encoder_pretrain": "models/encoder/mobilenet_v3_small_1.pt",
+  "pretrained": "models/integrated_3.pt",
+  "pretrained_encoder": null,
 
-    "features":             ["gender",  "age"],
-    "classifiers":          ["simple", "simple"],
-    "classifier_pretrain":  ["None","None"],
-    "datasets":             ["AgeDB", "UTKFace"],
-    "num_classes":          [2, 120],
+  "dataset": "AgeDB",
 
-    "preload":              0,
+  "age": true,
+  "gender": true,
 
-    "split_size":        [0.7, 0.2, 0.1],
-    "batch_size":        128,
-    "epochs":            30,
-    "lr":                0.002
+  "preload": false,
+  "use_preprocessed": true,
+
+  "split_size": [0.7, 0.2, 0.1],
+  "batch_size": 128,
+  "epochs": 30,
+  "lr": 0.002
 }

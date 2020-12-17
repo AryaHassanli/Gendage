@@ -1,128 +1,117 @@
 {
-    "datasets_dir": {
-        "name"      :  "datasets_dir",
-        "metavar"   :  "PATH",
-        "type"      :  "str",
-        "nargs"     :  "None",
-        "default"   :  "datasets",
-        "choices"   :  "None",
-        "help"      :  "PATH to datasets directory. e.g. /home/datasets/ or datasets"
-    },
-    "output_dir": {
-        "name"      :  "output_dir",
-        "metavar"   :  "PATH",
-        "type"      :  "str",
-        "nargs"     :  "None",
-        "default"   :  "output",
-        "choices"   :  "None",
-        "help"      :  "PATH to save the outputs. e.g. /artifacts/output/ or output"
-    },
-    "encoder": {
-        "name"      :  "encoder",
-        "metavar"   :  "ENC",
-        "type"      :  "str",
-        "nargs"     :  "None",
-        "default"   :  "mobilenet_v3_small",
-        "choices"   :  ["mobilenet_v3_small"],
-        "help"      :  "The Encoder network."
-    },
-    "encoder_pretrain": {
-        "name"      :  "encoder_pretrain",
-        "metavar"   :  "MODEL",
-        "type"      :  "str",
-        "nargs"     :  "None",
-        "default"   :  "models/encoder/mobilenet_v3_small_1.pt",
-        "choices"   :  ["models/encoder/mobilenet_v3_small_1.pt"],
-        "help"      :  "The Encoder pretrained model."
-    },
-    "features": {
-        "name"      :  "features",
-        "metavar"   :  "FEATURE",
-        "type"      :  "str",
-        "nargs"     :  "+",
-        "default"   :  ["gender",  "age"],
-        "choices"   :  ["age", "gender"],
-        "help"      :  "Features to train or test."
-    },
-    "datasets": {
-        "name"      :  "datasets",
-        "metavar"   :  "DS",
-        "type"      :  "str",
-        "nargs"     :  "+",
-        "default"   :  ["AgeDB", "UTKFace"],
-        "choices"   :  ["UTKFace", "AgeDB"],
-        "help"      :  "List of datasets for each task."
-    },
-    "classifiers": {
-        "name"      :  "classifiers",
-        "metavar"   :  "NET",
-        "type"      :  "str",
-        "nargs"     :  "+",
-        "default"   :  ["simple", "simple"],
-        "choices"   :  ["simple"],
-        "help"      :  "Network for each learning task."
-    },
-    "classifier_pretrain": {
-        "name"      :  "classifier_pretrain",
-        "metavar"   :  "MODEL",
-        "type"      :  "str",
-        "nargs"     :  "+",
-        "default"   :  ["None","None"],
-        "choices"   :  ["models/classifier/age_model.pt"],
-        "help"      :  "The classifier pretrained model."
-    },
-    "num_classes": {
-        "name"      :  "num_classes",
-        "metavar"   :  "N",
-        "type"      :  "int",
-        "nargs"     :  "+",
-        "default"   :  [2, 120],
-        "choices"   :  "None",
-        "help"      :  "Number of classes for each task. e.g. 120 2"
-    },
-    "preload": {
-        "name"      :  "preload",
-        "metavar"   :  "PRE",
-        "type"      :  "int",
-        "nargs"     :  "None",
-        "default"   :  0,
-        "choices"   :  [0, 1],
-        "help"      :  "Set to 1 to load the whole dataset to memory at beginning"
-    },
-    "split_size": {
-        "name"      :  "split_size",
-        "metavar"   :  "SIZE",
-        "type"      :  "float",
-        "nargs"     :  3,
-        "default"   :  [0.7, 0.2, 0.1],
-        "choices"   :  "None",
-        "help"      :  "Specify the train, validation and test size. e.g. 0.7 0.2 0.1"
-    },
-    "batch_size": {
-        "name"      :  "batch_size",
-        "metavar"   :  "BATCH",
-        "type"      :  "int",
-        "nargs"     :  "None",
-        "default"   :  128,
-        "choices"   :  "None",
-        "help"      :  "Batch size. e.g. 128"
-    },
-    "epochs": {
-        "name"      :  "epochs",
-        "metavar"   :  "EPOCHS",
-        "type"      :  "int",
-        "nargs"     :  "None",
-        "default"   :  30,
-        "choices"   :  "None",
-        "help"      :  "Number of epochs. e.g. 40"
-    },
-    "lr": {
-        "name"      :  "lr",
-        "metavar"   :  "LR",
-        "type"      :  "float",
-        "nargs"     :  "None",
-        "default"   :  0.002,
-        "choices"   :  "None",
-        "help"      :  "Learning Rate. e.g. 0.001"
-    }
+   "datasets_dir": {
+    "name": "datasets_dir",
+    "metavar": "PATH",
+    "type": "str",
+    "default": "datasets",
+    "action": "store",
+    "help": "PATH to datasets directory. e.g. /home/datasets/ or datasets"
+  },
+  "output_dir": {
+    "name": "output_dir",
+    "metavar": "PATH",
+    "type": "str",
+    "default": "output",
+    "action": "store",
+    "help": "PATH to save the outputs. e.g. /artifacts/output/ or output"
+  },
+  "pretrained_encoder": {
+    "name": "pretrained_encoder",
+    "metavar": "MODEL",
+    "type": "str",
+    "default": "models/encoder/05_mobilenet_v3_small_003.pt",
+    "choices": [
+      "models/encoder/05_mobilenet_v3_small_003.pt"
+    ],
+    "action": "store",
+    "help": "The Encoder pretrained model."
+  },
+  "pretrained": {
+    "name": "pretrained",
+    "metavar": "MODEL",
+    "type": "str",
+    "default": "models/integrated_3.pt",
+    "choices": [
+      "models/encoder/integrated_3.pt"
+    ],
+    "action": "store",
+    "help": "The pretrained model."
+  },
+  "dataset": {
+    "name": "dataset",
+    "metavar": "DS",
+    "type": "str",
+    "default": "UTKFace",
+    "choices": [
+      "UTKFace",
+      "AgeDB"
+    ],
+    "action": "store",
+    "help": "Datasets for the learning task."
+  },
+  "age": {
+    "name": "age",
+    "metavar": "AGE",
+    "default": false,
+    "const": true,
+    "action": "store_const",
+    "help": ""
+  },
+  "gender": {
+    "name": "gender",
+    "metavar": "GEN",
+    "default": false,
+    "const": true,
+    "action": "store_const",
+    "help": ""
+  },
+  "preload": {
+    "name": "preload",
+    "metavar": "PRE",
+    "default": false,
+    "const": true,
+    "action": "store_const",
+    "help": ""
+  },
+  "use_preprocessed": {
+    "name": "use_preprocessed",
+    "metavar": "PRE",
+    "default": false,
+    "const": true,
+    "action": "store_const",
+    "help": ""
+  },
+  "split_size": {
+    "name": "split_size",
+    "metavar": "SIZE",
+    "type": "float",
+    "nargs": 3,
+    "default": [0.7, 0.2, 0.1],
+    "action": "store",
+    "help": "Specify the train, validation and test size. e.g. 0.7 0.2 0.1"
+  },
+  "batch_size": {
+    "name": "batch_size",
+    "metavar": "BATCH",
+    "type": "int",
+    "default": 128,
+    "action": "store",
+    "help": "Batch size. e.g. 128"
+  },
+  "epochs": {
+    "name": "epochs",
+    "metavar": "EPOCHS",
+    "type": "int",
+    "default": 30,
+    "action": "store",
+    "help": "Number of epochs. e.g. 40"
+  },
+  "lr": {
+    "name": "lr",
+    "metavar": "LR",
+    "type": "float",
+    "default": 0.002,
+    "action": "store",
+    "help": "Learning Rate. e.g. 0.001"
+  }
 }
