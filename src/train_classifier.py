@@ -35,9 +35,8 @@ def main(output_dir: str = 'output',
         age=features.age,
         gender=features.gender,
         pretrained=pretrained,
-        pretrained_encoder=pretrained_encoder,
-        pretrained_age=None,
-        pretrained_gender=None).to(device)
+        pretrained_encoder=pretrained_encoder
+    ).to(device)
 
     mtcnn = MTCNN(
         keep_all=True,

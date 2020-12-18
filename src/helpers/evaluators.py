@@ -14,9 +14,8 @@ class EncoderMultitask:
         self.model = models.get(age=features.age,
                                 gender=features.gender,
                                 pretrained='models/integrated_3.pt',
-                                pretrained_encoder=None,
-                                pretrained_age=None,
-                                pretrained_gender=None).to(self.device)
+                                pretrained_encoder=None
+                                ).to(self.device)
 
     def __call__(self, faces):
         self.model.eval()
