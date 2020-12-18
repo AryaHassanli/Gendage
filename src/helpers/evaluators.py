@@ -23,23 +23,16 @@ class EncoderMultitask:
         self.model.eval()
         face_tensors = [face.image_tensor for face in faces]
         face_tensors = torch.stack(face_tensors).to(self.device)
+
         ages = None
         genders = None
         with torch.no_grad():
             outputs = self.model(face_tensors)
 
             if self.features.age:
-                output = outputs['age']
-                preds = functional.softmax(output, dim=-1).cpu().numpy()
-                classes = np.arange(0, preds.shape[1])
-                predicted_output = (preds * classes).sum(axis=-1)
-                ages = predicted_output
+                ages = outputs['age']
 
             if self.features.gender:
-                output = outputs['gender']
-                preds = functional.softmax(output, dim=-1).cpu().numpy()
-                classes = np.arange(0, preds.shape[1])
-                predicted_output = (preds * classes).sum(axis=-1)
-                genders = predicted_output
+                genders = outputs['gender']
 
         return {'ages': ages, 'genders': genders, 'encoded': outputs['encoded']}
