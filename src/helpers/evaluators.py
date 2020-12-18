@@ -17,7 +17,6 @@ class EncoderMultitask:
                                 pretrained_encoder=None,
                                 pretrained_age=None,
                                 pretrained_gender=None).to(self.device)
-        pass
 
     def __call__(self, faces):
         self.model.eval()

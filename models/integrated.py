@@ -1,18 +1,18 @@
+from typing import TypedDict
+
+import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import numpy as np
 
 
-def integrated(age=True,
-               gender=True,
-               pretrained=None,
-               pretrained_encoder=None,
-               pretrained_age=None,
-               pretrained_gender=None,
-               device='cpu',
-               **kwargs):
-    model = IntegratedModel()
+def integrated(age: bool = True,
+               gender: bool = True,
+               pretrained: str = None,
+               pretrained_encoder: str = None,
+               device: torch.device = torch.device('cpu')
+               ):
+    model = IntegratedModel(age=age, gender=gender)
     if pretrained:
         state_dict = torch.load(pretrained, map_location=device)
         model.load_state_dict(state_dict, strict=True)
@@ -21,13 +21,6 @@ def integrated(age=True,
             state_dict = torch.load(pretrained_encoder, map_location=device)
             model.encoder.load_state_dict(state_dict, strict=True)
 
-        if age and pretrained_age:
-            state_dict = torch.load(pretrained_age, map_location=device)
-            model.age.load_state_dict(state_dict, strict=True)
-
-        if gender and pretrained_gender:
-            state_dict = torch.load(pretrained_gender, map_location=device)
-            model.gender.load_state_dict(state_dict, strict=True)
     model.encoder.classify = False
     return model.to(device)
 
