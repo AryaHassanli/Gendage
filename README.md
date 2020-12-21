@@ -289,12 +289,18 @@ The `forward` method of the model outputs a `dict` including these keys:
 - `gender`: a float between `0` and `1` representing the predicted gender. `0` means male and `1` means female. If the gender parameter is set to False at the time of instantiation, the age will be always `0`.
 - `encoded`: a Tensor of 512 values which is the output feature vector of the image encoder. This vector can be used for further classifications. Originally, the age and the gender are produced by classification on this vector.
 
-`models/integrated.pt` always contains the latest pre-trained model. This model trained over the UTKFace dataset and using the MTCNN aligned and transformed images.
+`models/integrated.pt` contains the latest pre-trained model. This model trained over the UTKFace dataset and using the MTCNN aligned and transformed images.
 
-The alignment has been done using MTCNN with the following set of parameters:
+The transform set used to train the model are as follows:
 
 ```python
+from facenet_pytorch import fixed_image_standardization
 
+transforms = transforms.Compose([
+    transforms.Resize((160, 160)),
+    np.float32,
+    transforms.ToTensor(),
+    fixed_image_standardization])
 ```
 
 ### Add a Dataset
