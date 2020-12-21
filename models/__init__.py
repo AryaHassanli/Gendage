@@ -1,5 +1,7 @@
 import os
 
+import torch
+
 import models.integrated
 from models.integrated import IntegratedModel
 
@@ -9,10 +11,10 @@ __all__ = [f[:-3] for f in os.listdir(models_dir) if
                ('__init__.py', '__pycache__')) and f.endswith('.py')]
 
 
-def get(age=True,
-        gender=True,
-        pretrained=None,
-        device='cpu',
+def get(age: bool = True,
+        gender: bool = True,
+        pretrained: bool = None,
+        device: torch.device = torch.device('cpu'),
         **kwargs
         ) -> IntegratedModel:
     model = models.integrated.integrated(age=age,
