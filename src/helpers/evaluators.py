@@ -1,6 +1,4 @@
-import numpy as np
 import torch
-import torch.nn.functional as functional
 
 import models
 from src.helpers.types import Features
@@ -14,7 +12,6 @@ class EncoderMultitask:
         self.model = models.get(age=features.age,
                                 gender=features.gender,
                                 pretrained='models/integrated.pt',
-                                pretrained_encoder=None
                                 ).to(self.device)
 
     def __call__(self, faces):
