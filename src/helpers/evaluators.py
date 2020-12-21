@@ -13,7 +13,7 @@ class EncoderMultitask:
 
         self.model = models.get(age=features.age,
                                 gender=features.gender,
-                                pretrained='models/integrated_3.pt',
+                                pretrained='models/integrated.pt',
                                 pretrained_encoder=None
                                 ).to(self.device)
 
