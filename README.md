@@ -48,9 +48,8 @@
   * [Online - Webcam](#online---webcam)
   * [Train/Test a Classifier](#train-test-a-classifier)
   * [Using Config File](#using-config-file)
-  * [Add a Classifier](#add-a-classifier)
-  * [Add an Encoder](#add-an-encoder)
   * [Add a Dataset](#add-a-dataset)
+  * [Using the model](#using-the-model)
 - [Roadmap](#roadmap)
 - [Contributing](#contributing)
 - [License](#license)
@@ -158,9 +157,9 @@ UTKFace comes with an aligned version. It includes over 20K in the wild images. 
 
 #### How to use AgeDB and UTKFace
 
-After downloading the compressed files, move them to the datasets folder. The code itself decompress them when you run the code for the first time. For the AgeDB, the compressed file is password protected. You can either decompress it using the password you received from the author or put the password at the very begining line of `dataLoaders/AgeDB.py` by change the `zip_pass=b'UNKWONW'` to `zip_pass=b'PASSWORD'` where `PASSWORD` is the one that the AgeDB author has provided.
+After downloading the compressed files, move them to the datasets folder. The code itself decompress them when you run the code for the first time. For the AgeDB, the compressed file is password protected. You can either decompress it using the password you received from the author or put the password at the very beginning line of `dataLoaders/AgeDB.py` by change the `zip_pass=b'UNKWONW'` to `zip_pass=b'PASSWORD'` where `PASSWORD` is the one that the AgeDB author has provided.
 
-Rather than using the provided `datasets` folder it is possibe to create a folder with any name anywhere on your disk. In this case, the path to the new datasets folder should be set in CLI or config file.
+Rather than using the provided `datasets` folder it is possible to create a folder with any name anywhere on your disk. In this case, the path to the new datasets folder should be set in CLI or config file.
 
 The datasets folder structure would be as below:
 
@@ -267,16 +266,36 @@ optional arguments:
 
 ### Using Config File
 
-Instead of providing arguments using CLI, it is possible to create a json file and use it as list of arguments. **All** arguments except `config_file` are requierd to run the program. If an argument is missing in config file or CLI, the default value will be used. The default value for each argument is available by `gendage run -h`. 
+Instead of providing arguments using CLI, it is possible to create a json file and use it as list of arguments. **All** arguments except `config_file` are required to run the program. If an argument is missing in config file or CLI, the default value will be used. The default value for each argument is available by `gendage run -h`. 
 Therefore, the default set of arguments (mentioned in `gendage run -h`) will be used by the program by default! If `--config_file` is given, the arguments of config file will replace the default arguments. Then, the arguments given by CLI will replace both. A sample of config file for each main command is available in `config/`.
 
-### Add a Classifier
+### Using The model
 
-!!TODO!!
+The model itself can be used in any PyTorch project. To instantiate the model first copy the `models` folder to your project root. Then the model can be instantiated by calling the `get` method of the `models` module.
 
-### Add an Encoder
+```python
+import models
 
-!!TODO!!
+model = models.get(
+    age= True,
+    gender= True,
+    pretrained= 'models/integrated.pt', # path to state_dict
+    device= torch.device('cpu') # or any other device
+)
+```
+
+The `forward` method of the model outputs a `dict` including these keys:
+- `age`: a float representing the predicted age. If the age parameter is set to False at the time of instantiation, the age will be `0`.
+- `gender`: a float between `0` and `1` representing the predicted gender. `0` means male and `1` means female. If the gender parameter is set to False at the time of instantiation, the age will be always `0`.
+- `encoded`: a Tensor of 512 values which is the output feature vector of the image encoder. This vector can be used for further classifications. Originally, the age and the gender are produced by classification on this vector.
+
+`models/integrated.pt` always contains the latest pre-trained model. This model trained over the UTKFace dataset and using the MTCNN aligned and transformed images.
+
+The alignment has been done using MTCNN with the following set of parameters:
+
+```python
+
+```
 
 ### Add a Dataset
 
