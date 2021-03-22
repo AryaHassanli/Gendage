@@ -3,13 +3,12 @@ import torch
 import models.integrated
 from models.integrated import IntegratedModel
 
-
-def get(age: bool = True,
-        gender: bool = True,
-        pretrained: str = None,
-        device: torch.device = torch.device('cpu'),
-        **kwargs
-        ) -> IntegratedModel:
+def getIntegrated(age: bool = True,
+                  gender: bool = True,
+                  pretrained: str = None,
+                  device: torch.device = torch.device('cpu'),
+                  **kwargs
+                  ) -> IntegratedModel:
     """
     Returns the integrated model with the given options. If a feature (gender or age) is set to False the model
     will not produce it. To load a pre-trained model give the path to state_dict to `pretrained` parameter.

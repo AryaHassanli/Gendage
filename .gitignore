@@ -2,6 +2,8 @@
 Dockerfile
 /.ps_project
 tmp/**
+input/**
 output/**
 datasets/**
 !*/.gitkeep
+/venv/

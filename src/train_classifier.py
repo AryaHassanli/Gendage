@@ -17,6 +17,8 @@ from src.helpers.types import Features, TrainParameters
 log: logger.Train
 
 
+# TODO: Add freeze encoder as argument
+
 def main(output_dir: str = 'output',
          features: Features = Features(),
          parameters: TrainParameters = TrainParameters(),
@@ -31,7 +33,7 @@ def main(output_dir: str = 'output',
     global log
     log = logger.Train(output_dir)
 
-    model = models.get(
+    model = models.getIntegrated(
         age=features.age,
         gender=features.gender,
         pretrained=pretrained,
@@ -99,18 +101,17 @@ def train_age(model: models.IntegratedModel, train_loader, criterion, parameters
     loss_monitor = AverageMeter()
     acc_monitor = AverageMeter()
 
-    model.encoder.eval()
-    model.gender.eval()
-    model.age.train()
-
     for param in model.encoder.parameters():
-        param.requires_grad = False
-    for param in model.gender.parameters():
-        param.requires_grad = False
-    for param in model.age.parameters():
         param.requires_grad = True
 
-    optimizer = torch.optim.AdamW(model.age.parameters(),
+    if model.gender:
+        for param in model.gender.parameters():
+            param.requires_grad = True
+
+    for param in model.age.parameters():
+        param.requires_grad = False
+
+    optimizer = torch.optim.AdamW(list(model.age.parameters()) + list(model.encoder.parameters()),
                                   lr=parameters.lr,
                                   weight_decay=0.001)
 
@@ -159,13 +160,16 @@ def train_gender(model: models.IntegratedModel, train_loader, criterion, paramet
     acc_monitor = AverageMeter()
 
     for param in model.encoder.parameters():
-        param.requires_grad = False
+        param.requires_grad = True
+
     for param in model.gender.parameters():
         param.requires_grad = True
-    for param in model.age.parameters():
-        param.requires_grad = False
 
-    optimizer = torch.optim.AdamW(model.gender.parameters(),
+    if model.age:
+        for param in model.age.parameters():
+            param.requires_grad = False
+
+    optimizer = torch.optim.AdamW(list(model.gender.parameters()) + list(model.encoder.parameters()),
                                   lr=parameters.lr,
                                   weight_decay=0.001)
 
