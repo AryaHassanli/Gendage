@@ -39,18 +39,10 @@ class IntegratedModel(nn.Module):
         age = 0
         if self.age is not None:
             age = self.age(encoded)
-            preds = F.softmax(age, dim=-1).cpu().numpy()
-            classes = np.arange(0, 120)
-            predicted_output = (preds * classes).sum(axis=-1)
-            age = predicted_output
 
         gender = 0
         if self.gender is not None:
             gender = self.gender(encoded)
-            preds = F.softmax(gender, dim=-1).cpu().numpy()
-            classes = np.arange(0, 2)
-            predicted_output = (preds * classes).sum(axis=-1)
-            gender = predicted_output
 
         return {'encoded': encoded, 'age': age, 'gender': gender}
 

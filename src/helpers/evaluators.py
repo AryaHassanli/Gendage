@@ -24,6 +24,14 @@ class EncoderMultitask:
         with torch.no_grad():
             outputs = self.model(face_tensors)
 
+            # TODO!: IMPORTANT
+            """
+                preds = F.softmax(gender, dim=-1).cpu().numpy()
+                classes = np.arange(0, 2)
+                predicted_output = (preds * classes).sum(axis=-1)
+                gender = predicted_output
+            """
+
             if self.features.age:
                 ages = outputs['age']
 
